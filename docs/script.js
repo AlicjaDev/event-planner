@@ -482,6 +482,10 @@ function initializeMonthDisplay() {
   const monthDisplay = document.getElementById('monthDisplay');
   if (monthDisplay) {
     // Render the month display here
+    const today = new Date();
+    const month = today.toLocaleString('default', { month: 'long' });
+    const year = today.getFullYear();
+    monthDisplay.textContent = `${month} ${year}`;
     console.log('Month display initialized');
   } else {
     console.error('Month display element not found');

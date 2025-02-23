@@ -22,25 +22,6 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// Fetch the API key from Firebase
-// export async function getApiKey() {
-//   try {
-//     const snapshot = await getDoc(doc(db, "apikey", "googleGenerativeAI"));
-//     if (snapshot.exists()) {
-//       const apiKey = snapshot.data().key; // Get the API key from Firestore
-//       genAI = new GoogleGenerativeAI(apiKey); // Initialize Gemini AI
-//       model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }); // Use the desired model
-//       console.log("Gemini AI initialized successfully.");
-//     } else {
-//       console.error("API key document not found in Firestore.");
-//       throw new Error("API key document not found in Firestore.");
-//     }
-//   } catch (error) {
-//     console.error("Error fetching API key from Firestore:", error);
-//     throw error;
-//   }
-// }
-
 export async function getApiKey() {
   try {
     // Correct collection name: 'apiKeys' (plural and uppercase)
@@ -71,6 +52,34 @@ export async function askChatBot(request) {
     throw error;
   }
 }
+
+
+
+
+
+
+
+
+
+
+// Fetch the API key from Firebase
+// export async function getApiKey() {
+//   try {
+//     const snapshot = await getDoc(doc(db, "apikey", "googleGenerativeAI"));
+//     if (snapshot.exists()) {
+//       const apiKey = snapshot.data().key; // Get the API key from Firestore
+//       genAI = new GoogleGenerativeAI(apiKey); // Initialize Gemini AI
+//       model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }); // Use the desired model
+//       console.log("Gemini AI initialized successfully.");
+//     } else {
+//       console.error("API key document not found in Firestore.");
+//       throw new Error("API key document not found in Firestore.");
+//     }
+//   } catch (error) {
+//     console.error("Error fetching API key from Firestore:", error);
+//     throw error;
+//   }
+// }
 
 
 // // Initialize the Generative AI model
