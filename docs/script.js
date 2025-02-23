@@ -1,15 +1,20 @@
-import { initializeApp } from "firebase/app";
-import {
-  getFirestore,
-  collection,
-  getDocs,
-  addDoc,
-  updateDoc,
-  doc,
-  deleteDoc,
-} from "firebase/firestore";
-import { getApiKey, askChatBot } from './app.js';
-import { getAuth, GoogleAuthProvider } from 'firebase/auth';
+const { initializeApp, getFirestore, collection, getDocs, addDoc, updateDoc, doc, deleteDoc } = window.firebase;
+const { getAuth, GoogleAuthProvider } = window.firebase;
+const { GoogleGenerativeAI } = window;
+// import { initializeApp } from "firebase/app";
+// import {
+//   getFirestore,
+//   collection,
+//   getDocs,
+//   addDoc,
+//   updateDoc,
+//   doc,
+//   deleteDoc,
+// } from "firebase/firestore";
+// import { getApiKey, askChatBot } from './app.js';
+// import { getAuth, GoogleAuthProvider } from 'firebase/auth';
+// import { GoogleGenerativeAI } from '@google/generative-ai';
+
 
 // Firebase configuration
 const firebaseConfig = {
