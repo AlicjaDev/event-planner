@@ -75,7 +75,7 @@ biometricSignInButton.addEventListener('click', async () => {
   // Generate QR Code
   document.addEventListener('DOMContentLoaded', () => {
     const qrCodeContainer = document.getElementById('qr-code');
-    const url = window.location.href; // Link to your app
+    const url = "https://github.com/AlicjaDev/event-planner";
   
     QRCode.toCanvas(qrCodeContainer, url, (error) => {
       if (error) {
