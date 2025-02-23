@@ -461,6 +461,33 @@ toggleButton.addEventListener('click', () => {
 
 
 
+document.addEventListener('DOMContentLoaded', () => {
+  // Initialize the calendar and monthDisplay here
+  initializeCalendar();
+  initializeMonthDisplay();
+});
+
+
+function initializeCalendar() {
+  const calendar = document.getElementById('calendar');
+  if (calendar) {
+    // Render the calendar here
+    console.log('Calendar initialized');
+  } else {
+    console.error('Calendar element not found');
+  }
+}
+
+function initializeMonthDisplay() {
+  const monthDisplay = document.getElementById('monthDisplay');
+  if (monthDisplay) {
+    // Render the month display here
+    console.log('Month display initialized');
+  } else {
+    console.error('Month display element not found');
+  }
+}
+
 
 // // Biometric Authentication
 // const biometricSignInButton = document.getElementById('biometricSignIn');
