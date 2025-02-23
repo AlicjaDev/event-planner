@@ -462,72 +462,72 @@ toggleButton.addEventListener('click', () => {
 
 
 
-// Biometric Authentication
-const biometricSignInButton = document.getElementById('biometricSignIn');
+// // Biometric Authentication
+// const biometricSignInButton = document.getElementById('biometricSignIn');
 
-biometricSignInButton.addEventListener('click', async () => {
-  try {
-    // Check if WebAuthn is supported
-    if (!window.PublicKeyCredential) {
-      alert("Biometric authentication is not supported in this browser.");
-      return;
-    }
+// biometricSignInButton.addEventListener('click', async () => {
+//   try {
+//     // Check if WebAuthn is supported
+//     if (!window.PublicKeyCredential) {
+//       alert("Biometric authentication is not supported in this browser.");
+//       return;
+//     }
 
-    // Fetch challenge from server (mock for now)
-    const challenge = new Uint8Array(32);
-    window.crypto.getRandomValues(challenge);
+//     // Fetch challenge from server (mock for now)
+//     const challenge = new Uint8Array(32);
+//     window.crypto.getRandomValues(challenge);
 
-    // Create options for WebAuthn
-    const options = {
-      challenge: challenge,
-      rp: {
-        name: "Event Planter",
-      },
-      user: {
-        id: new Uint8Array(16),
-        name: "user@example.com",
-        displayName: "User",
-      },
-      pubKeyCredParams: [
-        {
-          type: "public-key",
-          alg: -7, // ES256
-        },
-      ],
-      timeout: 60000,
-      attestation: "direct",
-    };
+//     // Create options for WebAuthn
+//     const options = {
+//       challenge: challenge,
+//       rp: {
+//         name: "Event Planter",
+//       },
+//       user: {
+//         id: new Uint8Array(16),
+//         name: "user@example.com",
+//         displayName: "User",
+//       },
+//       pubKeyCredParams: [
+//         {
+//           type: "public-key",
+//           alg: -7, // ES256
+//         },
+//       ],
+//       timeout: 60000,
+//       attestation: "direct",
+//     };
 
-    // Create a new credential (register user)
-    const credential = await navigator.credentials.create({
-      publicKey: options,
-    });
+//     // Create a new credential (register user)
+//     const credential = await navigator.credentials.create({
+//       publicKey: options,
+//     });
 
-    console.log("Biometric credential created:", credential);
+//     console.log("Biometric credential created:", credential);
 
-    // Simulate successful authentication
-    localStorage.setItem("email", "user@example.com");
-    window.location.href = "calendar.html";
-  } catch (error) {
-    console.error("Biometric authentication failed:", error);
-    alert("Biometric authentication failed. Please try again.");
-  }
-});
+//     // Simulate successful authentication
+//     localStorage.setItem("email", "user@example.com");
+//     window.location.href = "index.html";
+//   } catch (error) {
+//     console.error("Biometric authentication failed:", error);
+//     alert("Biometric authentication failed. Please try again.");
+//   }
+// });
 
 
-// Generate QR Code
-document.addEventListener('DOMContentLoaded', () => {
-  const qrCodeContainer = document.getElementById('qr-code');
-  const url = window.location.href; // Link to your app
+// // Generate QR Code
+// document.addEventListener('DOMContentLoaded', () => {
+//   const qrCodeContainer = document.getElementById('qr-code');
+//   const url = "https://alicjadev.github.io/event-planner/"; // Link to your app
 
-  QRCode.toCanvas(qrCodeContainer, url, (error) => {
-    if (error) {
-      console.error("Error generating QR code:", error);
-    } else {
-      console.log("QR code generated successfully.");
-    }
-  });
-});
+//   QRCode.toCanvas(qrCodeContainer, url, (error) => {
+//     if (error) {
+//       console.error("Error generating QR code:", error);
+//     } else {
+//       console.log("QR code generated successfully.");
+//     }
+//   });
+// });
 
 
 

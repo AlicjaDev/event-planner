@@ -4,8 +4,7 @@
   "main": "app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-  
-    "start": "http-server",
+    "start": "webpack serve --open",
     "build": "webpack --mode production"
   },
   "keywords": [],

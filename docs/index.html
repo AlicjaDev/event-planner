@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Event Planter</title>
+  <title>Event Planner</title>
 
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
@@ -14,10 +14,18 @@
 
 <body>
 
-  <script>
+  <!-- <script>
     const email = localStorage.getItem("email");
     if (!email) {
       window.location.href = "signin.html";
+    }
+  </script> -->
+
+  <script>
+    // Redirect to sign-in page if not authenticated
+    const isAuthenticated = localStorage.getItem('authenticated');
+    if (!isAuthenticated) {
+      window.location.href = 'signin.html';
     }
   </script>
 
@@ -173,10 +181,12 @@
   <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 
 
-  <div id="qr-code-container">
+  <!-- <div id="qr-code-container">
     <h3>Scan to Share</h3>
     <canvas id="qr-code"></canvas>
-  </div>
+  </div> -->
+
+
 </body>
 
 </html>
