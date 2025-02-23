@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign In - Event Planter</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+</head>
+<body>
+  <div id="signin-container">
+    <h1>Welcome to Event Planner</h1>
+    <button id="googleSignIn">Sign In with Google</button>
+    <button id="biometricSignIn">Sign In with Biometrics</button>
+    <div id="qr-code-container">
+      <h3>Scan to Share</h3>
+      <canvas id="qr-code"></canvas>
+    </div>
+  </div>
+
+  <script src="signin.js"></script>
+</body>
+</html>
