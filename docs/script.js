@@ -140,6 +140,10 @@ function closeModal() {
   clicked = null;
   // load();
   fetchEvents(); 
+  const modal = document.getElementById('deleteModal');
+  if (modal) {
+    modal.style.display = 'none'; // Example of closing the modal
+  }
 }
 
 
