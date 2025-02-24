@@ -138,7 +138,8 @@ function closeModal() {
   eventTitleInput.value = '';
   eventTimeInput.value = '';
   clicked = null;
-  load();
+  // load();
+  fetchEvents(); 
 }
 
 
@@ -151,25 +152,39 @@ function showCustomPrompt(callback) {
   // Display the modal
   modal.style.display = 'flex';
 
-  // Handle the submit button click
-  document.getElementById('submitEventNumber').addEventListener('click', function() {
-  //   const eventIndex = inputField.value.trim();
-  //   if (eventIndex !== "") {
-  //     callback(eventIndex);  // Pass the event index to the callback
-  //     modal.style.display = 'none';  // Close the modal after submission
-  //   } else {
-  //     alert("Please enter a valid event number.");
-  //   }
-  // });
+//   // Handle the submit button click
 
+
+// In the showCustomPrompt function, update the submit handler:
+document.getElementById('submitEventNumber').addEventListener('click', function() {
   const eventIndex = inputField.value.trim();
-if (eventIndex !== "" && !isNaN(eventIndex) && eventIndex > 0) {
-  callback(eventIndex);  // Pass the event index to the callback
-  modal.style.display = 'none';  // Close the modal after submission
-} else {
-  alert("Please enter a valid event number.");
-}
+  if (eventIndex !== "" && !isNaN(eventIndex) && eventIndex > 0) {
+    callback(parseInt(eventIndex));  // Ensure we pass a number
+    modal.style.display = 'none';
+    inputField.value = ''; // Clear input field
+  } else {
+    showCustomAlert('Invalid Input', 'Please enter a valid event number.');
+  }
 });
+
+//   document.getElementById('submitEventNumber').addEventListener('click', function() {
+//   //   const eventIndex = inputField.value.trim();
+//   //   if (eventIndex !== "") {
+//   //     callback(eventIndex);  // Pass the event index to the callback
+//   //     modal.style.display = 'none';  // Close the modal after submission
+//   //   } else {
+//   //     alert("Please enter a valid event number.");
+//   //   }
+//   // });
+
+//   const eventIndex = inputField.value.trim();
+// if (eventIndex !== "" && !isNaN(eventIndex) && eventIndex > 0) {
+//   callback(eventIndex);  // Pass the event index to the callback
+//   modal.style.display = 'none';  // Close the modal after submission
+// } else {
+//   alert("Please enter a valid event number.");
+// }
+// });
 
   // Handle the cancel button click
   document.getElementById('cancelPromptModal').addEventListener('click', function() {
@@ -264,28 +279,52 @@ document.getElementById('closeDeleteButton').addEventListener('click', closeModa
 document.getElementById('cancelDeleteButton').addEventListener('click', closeModal);
 
 
+// function deleteEvent() {
+//   // Show the custom prompt modal and pass the callback function for handling input
+//   showCustomPrompt(function (eventIndex) {
+//     const indexToDelete = parseInt(eventIndex) - 1; // Subtract 1 to convert to zero-based index
+//     const eventsForDay = events.filter(e => e.date === clicked); // Filter events for the selected day
+
+//     if (indexToDelete >= 0 && indexToDelete < eventsForDay.length) {
+//       // Find the event to delete
+//       const eventToDelete = eventsForDay[indexToDelete];
+
+//       // Remove the event from the events array
+//       events = events.filter(e => !(e.date === clicked && e.time === eventToDelete.time && e.title === eventToDelete.title));
+
+//       // Save the updated events array to localStorage
+//       localStorage.setItem('events', JSON.stringify(events));
+
+//       // Show success alert
+//       showCustomAlert('Event Deleted', 'The event has been deleted successfully.');
+//     } else {
+//       // Show error alert
+//       showCustomAlert('Invalid Event', 'Invalid event number. Please try again.');
+//     }
+//   });
+// }
+
 function deleteEvent() {
-  // Show the custom prompt modal and pass the callback function for handling input
-  showCustomPrompt(function (eventIndex) {
-    const indexToDelete = parseInt(eventIndex) - 1; // Subtract 1 to convert to zero-based index
-    const eventsForDay = events.filter(e => e.date === clicked); // Filter events for the selected day
+  showCustomPrompt(async (eventIndex) => {
+    const indexToDelete = parseInt(eventIndex) - 1;
+    const eventsForDay = events.filter(e => e.date === clicked);
 
     if (indexToDelete >= 0 && indexToDelete < eventsForDay.length) {
-      // Find the event to delete
       const eventToDelete = eventsForDay[indexToDelete];
-
-      // Remove the event from the events array
-      events = events.filter(e => !(e.date === clicked && e.time === eventToDelete.time && e.title === eventToDelete.title));
-
-      // Save the updated events array to localStorage
-      localStorage.setItem('events', JSON.stringify(events));
-
-      // Show success alert
-      showCustomAlert('Event Deleted', 'The event has been deleted successfully.');
+      
+      try {
+        // Delete from Firestore using document ID
+        await deleteDoc(doc(db, 'events', eventToDelete.id));
+        await fetchEvents(); // Refresh events from database
+        showCustomAlert('Success', 'Event deleted successfully!');
+      } catch (error) {
+        console.error("Error deleting document: ", error);
+        showCustomAlert('Error', 'Failed to delete event.');
+      }
     } else {
-      // Show error alert
-      showCustomAlert('Invalid Event', 'Invalid event number. Please try again.');
+      showCustomAlert('Error', 'Invalid event number.');
     }
+    closeModal();
   });
 }
 
