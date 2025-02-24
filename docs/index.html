@@ -7,6 +7,35 @@
   <title>Event Planner</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+
+  <!-- Firebase CDN with type="module" -->
+  <script type="module" src="https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js"></script>
+  <script type="module" src="https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js"></script>
+  <script type="module" src="https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js"></script>
+
+  <!-- Your custom app logic and AI libraries -->
+  <script src="https://unpkg.com/@google/generative-ai/dist/generative-ai.umd.js"></script>
+
+  <!-- Custom Stylesheet -->
+  <link rel="stylesheet" href="styles.css">
+
+  <!-- Make sure this is the only script tag for your script.js, marked as a module -->
+  <script defer="defer" type="module" src="./script.js"></script>
+
+  <!-- Avoid redundant script tags for bundle.js -->
+  <!-- If using Webpack, ensure only one instance of bundle.js is loaded -->
+  <script defer="defer" src="bundle.js"></script>
+</head>
+
+<!-- <!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Event Planner</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
   <script type="module" src="https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js"></script>
   <script type="module" src="https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js"></script>
   <script type="module" src="https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js"></script>
@@ -17,7 +46,7 @@
   <script defer="defer" src="bundle.js"></script>
   <script defer="defer" src="bundle.js"></script>
   <script defer="defer" src="bundle.js"></script>
-</head>
+</head> -->
 
 <body>
   <script>// Redirect to sign-in page if not authenticated
