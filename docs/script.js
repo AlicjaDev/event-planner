@@ -485,7 +485,7 @@ function initButtons() {
 
   document.getElementById('saveButton').addEventListener('click', saveEvent);
 
-  // document.getElementById('cancelButton').addEventListener('click', closeModal);
+   document.getElementById('cancelButton').addEventListener('click', closeModal);
   // document.getElementById('closeButton').addEventListener('click', closeModal);
   // document.getElementById('closeDeleteButton').addEventListener('click', closeModal);
 
