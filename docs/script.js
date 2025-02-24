@@ -352,22 +352,12 @@ async function saveEvent() {
     eventTimeInput.classList.remove('error');
 
 
-    const existingEvent = events.find(e => e.date === formattedDate && e.time === eventTime);
-
-    if (existingEvent) {
-      showCustomAlert('Error', 'An event already exists at this time.');
-      return;
-    }
-    
-
     const eventData = {
-      date: formattedDate,  // Use the correctly formatted date
-      time: eventTime,
-      title: eventTitle,
-      description: document.getElementById('eventDescriptionInput').value.trim(),
-    };
-
-    
+  date: formattedDate,  // Use the correctly formatted date
+  time: eventTime,
+  title: eventTitle,
+  description: document.getElementById('eventDescriptionInput').value.trim(),
+};
 
     // const eventData = {
     //   date: clicked,
