@@ -165,14 +165,24 @@ function showCustomPrompt(callback) {
 
 
 // In the showCustomPrompt function, update the submit handler:
+// document.getElementById('submitEventNumber').addEventListener('click', function() {
+//   const eventIndex = inputField.value.trim();
+//   if (eventIndex !== "" && !isNaN(eventIndex) && eventIndex > 0) {
+//     callback(parseInt(eventIndex));  // Ensure we pass a number
+//     modal.style.display = 'none';
+//     inputField.value = ''; // Clear input field
+//   } else {
+//     showCustomAlert('Invalid Input', 'Please enter a valid event number.');
+//   }
+// });
+
 document.getElementById('submitEventNumber').addEventListener('click', function() {
   const eventIndex = inputField.value.trim();
-  if (eventIndex !== "" && !isNaN(eventIndex) && eventIndex > 0) {
-    callback(parseInt(eventIndex));  // Ensure we pass a number
-    modal.style.display = 'none';
-    inputField.value = ''; // Clear input field
+  if (eventIndex !== "") {
+    callback(eventIndex);  // Pass the event index to the callback
+    modal.style.display = 'none';  // Close the modal after submission
   } else {
-    showCustomAlert('Invalid Input', 'Please enter a valid event number.');
+    alert("Please enter a valid event number.");
   }
 });
 
@@ -469,10 +479,6 @@ function load() {
 
 async function saveEvent() {
 
-  if (!clicked) {
-    showCustomAlert('Error', 'No date selected!');
-    return;
-  }
 
 
   const eventTitle = eventTitleInput.value.trim();
