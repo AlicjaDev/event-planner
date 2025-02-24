@@ -370,6 +370,20 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 
+// Adding an input and button to communicate with the chatbot
+const chatInput = document.getElementById('chatInput'); // A text input field for user message
+const sendButton = document.getElementById('sendButton'); // A button to trigger chatbot interaction
+
+sendButton.addEventListener('click', async () => {
+  const request = chatInput.value.trim();
+  if (request) {
+    // Call the processBotRequest function to interact with the bot
+    await processBotRequest(request);
+  }
+});
+
+
+
 // import { initializeApp } from "firebase/app";
 // import {
 //   getFirestore,
