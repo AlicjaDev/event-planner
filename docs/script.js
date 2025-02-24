@@ -59,26 +59,42 @@ const weekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Frida
 //   }
 // }
 
+
 async function fetchEvents() {
-  const eventsCol = collection(db, 'events');
-  const snapshot = await getDocs(eventsCol);
-  events = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); // Include document ID
-  load(); // Refresh the calendar
-}
-
-// Helper function to convert time to minutes past midnight
-function timeToMinutes(time) {
-  const [hourMin, period] = time.split(' ');
-  let [hours, minutes] = hourMin.split(':').map(num => parseInt(num, 10));
-
-  if (period === 'PM' && hours !== 12) {
-    hours += 12;
-  } else if (period === 'AM' && hours === 12) {
-    hours = 0;
+  try {
+    const querySnapshot = await getDocs(collection(db, 'events'));
+    events = []; // Clear the global events array
+    querySnapshot.forEach((doc) => {
+      events.push({ id: doc.id, ...doc.data() }); // Store the document ID and data
+    });
+    console.log("Events fetched:", events); // Debugging
+    load(); // Render the calendar after fetching events
+  } catch (error) {
+    console.error("Error fetching events:", error);
   }
-
-  return hours * 60 + minutes; // Convert to total minutes since midnight
 }
+
+
+// async function fetchEvents() {
+//   const eventsCol = collection(db, 'events');
+//   const snapshot = await getDocs(eventsCol);
+//   events = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); // Include document ID
+//   load(); // Refresh the calendar
+// }
+
+// // Helper function to convert time to minutes past midnight
+// function timeToMinutes(time) {
+//   const [hourMin, period] = time.split(' ');
+//   let [hours, minutes] = hourMin.split(':').map(num => parseInt(num, 10));
+
+//   if (period === 'PM' && hours !== 12) {
+//     hours += 12;
+//   } else if (period === 'AM' && hours === 12) {
+//     hours = 0;
+//   }
+
+//   return hours * 60 + minutes; // Convert to total minutes since midnight
+// }
 
 // Function to generate 30-minute time intervals
 function generateTimeIntervals() {
