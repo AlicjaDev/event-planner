@@ -1,4 +1,4 @@
-// import { initializeApp } from "firebase/app";
+import { initializeApp } from "firebase/app";
 import { getFirestore, collection, getDocs, addDoc, doc, deleteDoc, updateDoc, query, where } from "firebase/firestore";
 import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "firebase/auth";
 import { GoogleGenerativeAI } from "@google/generative-ai";
@@ -31,6 +31,28 @@ const editEventModal = document.getElementById('editEventModal');
 const eventTitleInput = document.getElementById('eventTitleInput');
 const eventTimeInput = document.getElementById('eventTimeInput');
 const eventDescriptionInput = document.getElementById('eventDescriptionInput');
+
+// Authentication
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    currentUser = user;
+    document.getElementById('signin-btn').style.display = 'none';
+    document.getElementById('signout-btn').style.display = 'block';
+    loadEvents();
+    initCalendar();
+  } else {
+    window.location.href = 'signin.html';
+  }
+});
+
+document.getElementById('signin-btn').addEventListener('click', () => {
+  signInWithPopup(auth, provider);
+});
+
+document.getElementById('signout-btn').addEventListener('click', () => {
+  auth.signOut();
+  localStorage.removeItem('authenticated');
+});
 
 // Calendar Initialization
 function initCalendar() {
