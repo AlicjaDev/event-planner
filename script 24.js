@@ -44,6 +44,22 @@ const eventTitleInput = document.getElementById('eventTitleInput');
 const eventTimeInput = document.getElementById('eventTimeInput');
 const weekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
+// Fetch events from Firestore
+// async function fetchEvents() {
+//   try {
+//     const querySnapshot = await getDocs(collection(db, 'events'));
+//     events = []; // Clear the global events array
+//     querySnapshot.forEach((doc) => {
+//       events.push({ id: doc.id, ...doc.data() }); // Store the document ID and data
+//     });
+//     console.log("Events fetched:", events); // Debugging
+//     load(); // Render the calendar after fetching events
+//   } catch (error) {
+//     console.error("Error fetching events:", error);
+//   }
+// }
+
+
 async function fetchEvents() {
   try {
     const querySnapshot = await getDocs(collection(db, 'events'));
@@ -58,6 +74,27 @@ async function fetchEvents() {
   }
 }
 
+
+// async function fetchEvents() {
+//   const eventsCol = collection(db, 'events');
+//   const snapshot = await getDocs(eventsCol);
+//   events = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); // Include document ID
+//   load(); // Refresh the calendar
+// }
+
+// // Helper function to convert time to minutes past midnight
+// function timeToMinutes(time) {
+//   const [hourMin, period] = time.split(' ');
+//   let [hours, minutes] = hourMin.split(':').map(num => parseInt(num, 10));
+
+//   if (period === 'PM' && hours !== 12) {
+//     hours += 12;
+//   } else if (period === 'AM' && hours === 12) {
+//     hours = 0;
+//   }
+
+//   return hours * 60 + minutes; // Convert to total minutes since midnight
+// }
 
 // Function to generate 30-minute time intervals
 function generateTimeIntervals() {
@@ -130,6 +167,8 @@ function closeModal() {
   //fetchEvents(); 
 }
 
+
+
 function showCustomPrompt(callback) {
   // Show the modal
   const modal = document.getElementById('customPromptModal');
@@ -137,6 +176,21 @@ function showCustomPrompt(callback) {
   
   // Display the modal
   modal.style.display = 'flex';
+
+//   // Handle the submit button click
+
+
+// In the showCustomPrompt function, update the submit handler:
+// document.getElementById('submitEventNumber').addEventListener('click', function() {
+//   const eventIndex = inputField.value.trim();
+//   if (eventIndex !== "" && !isNaN(eventIndex) && eventIndex > 0) {
+//     callback(parseInt(eventIndex));  // Ensure we pass a number
+//     modal.style.display = 'none';
+//     inputField.value = ''; // Clear input field
+//   } else {
+//     showCustomAlert('Invalid Input', 'Please enter a valid event number.');
+//   }
+// });
 
 document.getElementById('submitEventNumber').addEventListener('click', function() {
   const eventIndex = inputField.value.trim();
@@ -147,6 +201,25 @@ document.getElementById('submitEventNumber').addEventListener('click', function(
     alert("Please enter a valid event number.");
   }
 });
+
+//   document.getElementById('submitEventNumber').addEventListener('click', function() {
+//   //   const eventIndex = inputField.value.trim();
+//   //   if (eventIndex !== "") {
+//   //     callback(eventIndex);  // Pass the event index to the callback
+//   //     modal.style.display = 'none';  // Close the modal after submission
+//   //   } else {
+//   //     alert("Please enter a valid event number.");
+//   //   }
+//   // });
+
+//   const eventIndex = inputField.value.trim();
+// if (eventIndex !== "" && !isNaN(eventIndex) && eventIndex > 0) {
+//   callback(eventIndex);  // Pass the event index to the callback
+//   modal.style.display = 'none';  // Close the modal after submission
+// } else {
+//   alert("Please enter a valid event number.");
+// }
+// });
 
   // Handle the cancel button click
   document.getElementById('cancelPromptModal').addEventListener('click', function() {
@@ -245,6 +318,36 @@ document.getElementById('cancelDeleteButton').addEventListener('click', closeMod
 document.getElementById('deleteButton').addEventListener('click', deleteEvent);
 document.getElementById('closeDeleteButton').addEventListener('click', closeModal);
 
+// document.getElementById('deleteButton').addEventListener('click', deleteEvent);
+// document.getElementById('closeDeleteButton').addEventListener('click', closeModal);
+// document.getElementById('cancelDeleteButton').addEventListener('click', closeModal);
+
+
+// function deleteEvent() {
+//   // Show the custom prompt modal and pass the callback function for handling input
+//   showCustomPrompt(function (eventIndex) {
+//     const indexToDelete = parseInt(eventIndex) - 1; // Subtract 1 to convert to zero-based index
+//     const eventsForDay = events.filter(e => e.date === clicked); // Filter events for the selected day
+
+//     if (indexToDelete >= 0 && indexToDelete < eventsForDay.length) {
+//       // Find the event to delete
+//       const eventToDelete = eventsForDay[indexToDelete];
+
+//       // Remove the event from the events array
+//       events = events.filter(e => !(e.date === clicked && e.time === eventToDelete.time && e.title === eventToDelete.title));
+
+//       // Save the updated events array to localStorage
+//       localStorage.setItem('events', JSON.stringify(events));
+
+//       // Show success alert
+//       showCustomAlert('Event Deleted', 'The event has been deleted successfully.');
+//     } else {
+//       // Show error alert
+//       showCustomAlert('Invalid Event', 'Invalid event number. Please try again.');
+//     }
+//   });
+// }
+
 function deleteEvent() {
   showCustomPrompt(async (eventIndex) => {
     const indexToDelete = parseInt(eventIndex) - 1;
@@ -268,6 +371,54 @@ function deleteEvent() {
     closeModal();
   });
 }
+
+// function deleteEvent() {
+//   showCustomPrompt(async (eventIndex) => {
+//     const indexToDelete = parseInt(eventIndex) - 1;
+//     const eventsForDay = events.filter(e => e.date === clicked);
+
+//     if (indexToDelete >= 0 && indexToDelete < eventsForDay.length) {
+//       const eventToDelete = eventsForDay[indexToDelete];
+      
+//       try {
+//         // Delete from Firestore using document ID
+//         await deleteDoc(doc(db, 'events', eventToDelete.id));
+//         await fetchEvents(); // Refresh events from the database
+//         showCustomAlert('Success', 'Event deleted successfully!');
+//       } catch (error) {
+//         console.error("Error deleting document: ", error);
+//         showCustomAlert('Error', 'Failed to delete event.');
+//       }
+//     } else {
+//       showCustomAlert('Error', 'Invalid event number.');
+//     }
+//     closeModal();  // Close the modal after the deletion
+//   });
+// }
+
+// function deleteEvent() {
+//   showCustomPrompt(async (eventIndex) => {
+//     const indexToDelete = parseInt(eventIndex) - 1;
+//     const eventsForDay = events.filter(e => e.date === clicked);
+
+//     if (indexToDelete >= 0 && indexToDelete < eventsForDay.length) {
+//       const eventToDelete = eventsForDay[indexToDelete];
+      
+//       try {
+//         // Delete from Firestore using document ID
+//         await deleteDoc(doc(db, 'events', eventToDelete.id));
+//         await fetchEvents(); // Refresh events from database
+//         showCustomAlert('Success', 'Event deleted successfully!');
+//       } catch (error) {
+//         console.error("Error deleting document: ", error);
+//         showCustomAlert('Error', 'Failed to delete event.');
+//       }
+//     } else {
+//       showCustomAlert('Error', 'Invalid event number.');
+//     }
+//     closeModal();
+//   });
+// }
 
 document.getElementById('cancelDeleteButton').addEventListener('click', closeModal);
 
@@ -342,150 +493,9 @@ function load() {
 }
 
 
-// async function saveEvent() {
-//   const eventTitle = eventTitleInput.value.trim();
-//   const eventTime = eventTimeInput.value;
-
-//   if (eventTitle && eventTime && clicked) {
-//     eventTitleInput.classList.remove('error');
-//     eventTimeInput.classList.remove('error');
-
-//     // Ensure 'clicked' is a valid date and format it
-//     const clickedDate = new Date(clicked);
-//     const formattedDate = `${clickedDate.getMonth() + 1}/${clickedDate.getDate()}/${clickedDate.getFullYear()}`;
-
-//     // Check if event already exists for the same date and time
-//     const existingEvent = events.find(e => e.date === formattedDate && e.time === eventTime);
-//     if (existingEvent) {
-//       showCustomAlert('Error', 'An event already exists at this time.');
-//       return;
-//     }
-
-//     const eventData = {
-//       date: formattedDate,
-//       time: eventTime,
-//       title: eventTitle,
-//       description: document.getElementById('eventDescriptionInput').value.trim(),
-//     };
-
-//     try {
-//       await addDoc(collection(db, 'events'), eventData);
-//       await fetchEvents(); // Reload events from Firestore
-//       closeModal();  // Close the modal after saving
-//     } catch (error) {
-//       console.error("Error adding document: ", error);
-//     }
-//   } else {
-//     if (!eventTitle) {
-//       eventTitleInput.classList.add('error');
-//     }
-//     if (!eventTime) {
-//       eventTimeInput.classList.add('error');
-//     }
-//     if (!clicked) {
-//       showCustomAlert('Error', 'Please select a date first!');
-//     }
-//   }
-// }
-
-// function openModal(date) {
-//   if (!date) {
-//     showCustomAlert('Error', 'Please select a date first!');
-//     return;
-//   }
-
-//   clicked = date;
-//   const eventsForDay = events.filter(e => e.date === clicked);
-
-//   if (eventsForDay.length > 0) {
-//     document.getElementById('eventText').innerHTML = eventsForDay
-//       .sort((a, b) => timeToMinutes(a.time) - timeToMinutes(b.time))
-//       .map((e, index) => {
-//         return `
-//           <div>
-//             <strong>${index + 1}. ${e.time} - ${e.title}</strong>
-//             ${e.description ? `<p>${e.description}</p>` : ''}
-//           </div>
-//         `;
-//       })
-//       .join('');
-//     deleteEventModal.style.display = 'block';
-//   } else {
-//     newEventModal.style.display = 'block';
-//   }
-
-//   backDrop.style.display = 'block';
-// }
-
-// function load() {
-//   const dt = new Date();
-
-//   if (nav !== 0) {
-//     dt.setMonth(new Date().getMonth() + nav);
-//   }
-
-//   const day = dt.getDate();
-//   const month = dt.getMonth();
-//   const year = dt.getFullYear();
-
-//   const firstDayOfMonth = new Date(year, month, 1);
-//   const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-//   const dateString = firstDayOfMonth.toLocaleDateString('en-us', {
-//     weekday: 'long',
-//     year: 'numeric',
-//     month: 'numeric',
-//     day: 'numeric',
-//   });
-//   const paddingDays = weekdays.indexOf(dateString.split(', ')[0]);
-
-//   document.getElementById('monthDisplay').innerText =
-//     `${dt.toLocaleDateString('en-us', { month: 'long' })} ${year}`;
-
-//   calendar.innerHTML = '';
-
-//   for (let i = 1; i <= paddingDays + daysInMonth; i++) {
-//     const daySquare = document.createElement('div');
-//     daySquare.classList.add('day');
-
-//     const dayString = `${month + 1}/${i - paddingDays}/${year}`;
-
-//     if (i > paddingDays) {
-//       daySquare.innerText = i - paddingDays;
-//       const eventsForDay = events.filter((e) => e.date === dayString);
-
-//       if (i - paddingDays === day && nav === 0) {
-//         daySquare.id = 'currentDay';
-//       }
-
-//       if (eventsForDay.length > 0) {
-//         eventsForDay
-//           .sort((a, b) => timeToMinutes(a.time) - timeToMinutes(b.time))
-//           .forEach((event) => {
-//             const eventDiv = document.createElement('div');
-//             eventDiv.classList.add('event');
-//             eventDiv.innerHTML = `<strong>${event.time} - ${event.title}</strong>`;
-//             if (event.description) {
-//               const descriptionDiv = document.createElement('div');
-//               descriptionDiv.classList.add('event-description');
-//               descriptionDiv.innerText = event.description;
-//               eventDiv.appendChild(descriptionDiv);
-//             }
-//             daySquare.appendChild(eventDiv);
-//           });
-//       }
-
-//       daySquare.addEventListener('click', () => openModal(dayString));
-//     } else {
-//       daySquare.classList.add('padding');
-//     }
-
-//     calendar.appendChild(daySquare);
-//   }
-// }
-
-
 async function saveEvent() {
+
+
 
   const eventTitle = eventTitleInput.value.trim();
   const eventTime = eventTimeInput.value;
@@ -494,30 +504,12 @@ async function saveEvent() {
     eventTitleInput.classList.remove('error');
     eventTimeInput.classList.remove('error');
 
-
-    const existingEvent = events.find(e => e.date === formattedDate && e.time === eventTime);
-
-    if (existingEvent) {
-      showCustomAlert('Error', 'An event already exists at this time.');
-      return;
-    }
-    
-
     const eventData = {
-      date: formattedDate,  // Use the correctly formatted date
+      date: clicked,
       time: eventTime,
       title: eventTitle,
       description: document.getElementById('eventDescriptionInput').value.trim(),
     };
-
-    
-
-    // const eventData = {
-    //   date: clicked,
-    //   time: eventTime,
-    //   title: eventTitle,
-    //   description: document.getElementById('eventDescriptionInput').value.trim(),
-    // };
 
     try {
       // Save the event to Firestore
@@ -542,9 +534,6 @@ async function saveEvent() {
 
 let listenersInitialized = false;
 
-const clickedDate = new Date(clicked);
-const formattedDate = `${clickedDate.getMonth() + 1}/${clickedDate.getDate()}/${clickedDate.getFullYear()}`;
-
 
 // Initialize buttons
 function initButtons() {
@@ -567,6 +556,8 @@ function initButtons() {
    document.getElementById('cancelButton').addEventListener('click', closeModal);
   // document.getElementById('closeButton').addEventListener('click', closeModal);
   // document.getElementById('closeDeleteButton').addEventListener('click', closeModal);
+
+
 
 // Modify your "Add Event" button handler
 document.getElementById('addEventButton').addEventListener('click', () => {
@@ -594,12 +585,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   fetchEvents(); // Fetch events from Firestore
   initButtons(); // Initialize buttons
 });
-
-
-
-
-
-
 
 
 
