@@ -31,6 +31,7 @@ const db = getFirestore(app);
 const auth = getAuth();
 const provider = new GoogleAuthProvider();
 
+
 let nav = 0;
 let clicked = null;
 let events = []; // Global variable to store events
@@ -146,8 +147,8 @@ function closeModal() {
   eventTimeInput.value = '';
   document.getElementById('eventDescriptionInput').value = '';
   clicked = null;
-  // load();
-  fetchEvents(); 
+   load();
+  //fetchEvents(); 
 }
 
 
@@ -270,6 +271,7 @@ document.getElementById('modalBackDrop').addEventListener('click', function() {
   document.getElementById('deleteEventModal').style.display = 'none';
   document.getElementById('newEventModal').style.display = 'none';
   document.getElementById('customAlertModal').style.display = 'none';
+  backDrop.style.display = 'none'; 
 });
 
 
