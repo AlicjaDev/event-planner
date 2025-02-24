@@ -1,9 +1,121 @@
-<<<<<<< HEAD
-<!doctype html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Event Planner</title><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css"/><script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script><script type="module" src="https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js"></script><script type="module" src="https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js"></script><script type="module" src="https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js"></script><script src="https://unpkg.com/@google/generative-ai/dist/generative-ai.umd.js"></script><link rel="stylesheet" href="styles.css"><script defer="defer" type="module" src="./script.js"></script><script defer="defer" src="bundle.js"></script><script defer="defer" src="bundle.js"></script><script defer="defer" src="bundle.js"></script><script defer="defer" src="bundle.js"></script><script defer="defer" src="bundle.js"></script><script defer="defer" src="bundle.js"></script><script defer="defer" src="bundle.js"></script><script defer="defer" src="bundle.js"></script><script defer="defer" src="bundle.js"></script></head><body><script>// Redirect to sign-in page if not authenticated
-=======
-<!doctype html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Event Planner</title><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css"/><script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script><script type="module" src="https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js"></script><script type="module" src="https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js"></script><script type="module" src="https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js"></script><script src="https://unpkg.com/@google/generative-ai/dist/generative-ai.umd.js"></script><link rel="stylesheet" href="styles.css"><script defer="defer" type="module" src="./script.js"></script><script defer="defer" src="bundle.js"></script><script defer="defer" src="bundle.js"></script><script defer="defer" src="bundle.js"></script><script defer="defer" src="bundle.js"></script></head><body><script>// Redirect to sign-in page if not authenticated
->>>>>>> a08c12ae8712e386a5ea35377f4a5cd4a3e36b29
-    const isAuthenticated = localStorage.getItem('authenticated');
-    if (!isAuthenticated) {
-      window.location.href = 'signin.html';
-    }</script><div id="container"><div id="header"><div id="monthDisplay"></div><div><button id="backButton">Backward</button> <button id="nextButton">Forward</button></div></div><div id="app"></div><div id="weekdays"><div>Sunday</div><div>Monday</div><div>Tuesday</div><div>Wednesday</div><div>Thursday</div><div>Friday</div><div>Saturday</div></div><div id="calendar"></div><div id="chatbot-container"><button id="toggle-chatbot">Toggle Chatbot</button><div id="chatbot-content"><div id="chat-history"></div><input id="aiInput" placeholder="Type your message..."> <button id="aiButton">Send</button></div></div></div><div id="customAlertModal" class="custom-alert-modal"><div class="custom-alert-content"><span id="closeAlertButton" class="close-alert">×</span><h2 id="alertTitle"></h2><p id="alertMessage"></p><button id="closeAlertButton2" class="modal-close-button">Close</button></div></div><div id="newEventModal" class="modal"><div class="modal-content"><span id="closeButton" class="close"></span><h2>Add Event</h2><input id="eventTitleInput" placeholder="Event Title"> <label for="eventTimeInput">Event Time:</label><div><select id="eventTimeInput"><option value="" disabled="disabled" selected="selected">Select time</option></select></div><label for="eventDescriptionInput">Event Description:</label> <textarea id="eventDescriptionInput" placeholder="Event Description"></textarea> <button id="saveButton">Save Event</button> <button id="cancelButton">Cancel</button></div></div><div id="deleteEventModal" class="modal"><div class="modal-content"><span id="closeDeleteButton" class="close">×</span><h2>Event Details</h2><p id="eventText"></p><button id="addEventButton">Add New Event</button> <button id="deleteButton">Delete Event</button> <button id="cancelDeleteButton">Cancel</button></div></div><div id="customPromptModal" class="modal"><div class="modal-content"><span id="closePromptModal" class="close">×</span><h2>Enter Event Number to Delete</h2><input type="number" id="eventNumberInput" placeholder="Enter event number" min="1"> <button id="submitEventNumber">Delete Event</button> <button id="cancelPromptModal">Cancel</button></div></div><div id="modalBackDrop" class="backdrop"></div><div id="editEventModal" style="display:none;"><div class="modal-content"><h2>Edit Event</h2><label for="editEventTitle">Title:</label> <input id="editEventTitle" placeholder="Event Title"><br><label for="editEventTime">Event Time:</label> <select id="editEventTime"></select><br><label for="editEventDescription">Description:</label> <textarea id="editEventDescription" placeholder="Event Description"></textarea> <button id="saveEditedEvent">Save Changes</button> <button id="cancelEditButton">Cancel</button></div></div><div id="customAlertModal2" class="custom-alert-modal"><div class="custom-alert-content"><span id="closeAlertButton2" class="close-alert">×</span><h2 id="alertTitle2"></h2><p id="alertMessage2"></p><button id="closeAlertButton3" class="modal-close-button">Close</button></div></div></body></html>
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Event Planner</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+  <script type="module" src="https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js"></script>
+  <script type="module" src="https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js"></script>
+  <script type="module" src="https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js"></script>
+  <script src="https://unpkg.com/@google/generative-ai/dist/generative-ai.umd.js"></script>
+  <link rel="stylesheet" href="styles.css">
+  <script defer="defer" type="module" src="./script.js"></script>
+  <script defer="defer" src="bundle.js"></script>
+  <script defer="defer" src="bundle.js"></script>
+  <script defer="defer" src="bundle.js"></script>
+  <script defer="defer" src="bundle.js"></script>
+  <script defer="defer" src="bundle.js"></script>
+  <script defer="defer" src="bundle.js"></script>
+  <script defer="defer" src="bundle.js"></script>
+  <script defer="defer" src="bundle.js"></script>
+  <script defer="defer" src="bundle.js"></script>
+</head>
+
+<body>
+  <script>// Redirect to sign-in page if not authenticated
+
+< !doctype html > <html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Event Planner</title><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" /><script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+  <script type="module" src="https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js"></script>
+  <script type="module" src="https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js"></script>
+  <script type="module" src="https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js"></script>
+  <script src="https://unpkg.com/@google/generative-ai/dist/generative-ai.umd.js"></script>
+  <link rel="stylesheet" href="styles.css">
+  <script defer="defer" type="module" src="./script.js"></script>
+  <script defer="defer" src="bundle.js"></script>
+  <script defer="defer" src="bundle.js"></script>
+  <script defer="defer" src="bundle.js"></script>
+  <script defer="defer" src="bundle.js"></script>
+  </head>
+
+  <body>
+    <script>// Redirect to sign-in page if not authenticated
+
+  const isAuthenticated = localStorage.getItem('authenticated');
+  if (!isAuthenticated) {
+    window.location.href = 'signin.html';
+    }</script>
+    <div id="container">
+      <div id="header">
+        <div id="monthDisplay"></div>
+        <div><button id="backButton">Backward</button> <button id="nextButton">Forward</button></div>
+      </div>
+      <div id="app"></div>
+      <div id="weekdays">
+        <div>Sunday</div>
+        <div>Monday</div>
+        <div>Tuesday</div>
+        <div>Wednesday</div>
+        <div>Thursday</div>
+        <div>Friday</div>
+        <div>Saturday</div>
+      </div>
+      <div id="calendar"></div>
+      <div id="chatbot-container"><button id="toggle-chatbot">Toggle Chatbot</button>
+        <div id="chatbot-content">
+          <div id="chat-history"></div><input id="aiInput" placeholder="Type your message..."> <button
+            id="aiButton">Send</button>
+        </div>
+      </div>
+    </div>
+    <div id="customAlertModal" class="custom-alert-modal">
+      <div class="custom-alert-content"><span id="closeAlertButton" class="close-alert">×</span>
+        <h2 id="alertTitle"></h2>
+        <p id="alertMessage"></p><button id="closeAlertButton2" class="modal-close-button">Close</button>
+      </div>
+    </div>
+    <div id="newEventModal" class="modal">
+      <div class="modal-content"><span id="closeButton" class="close"></span>
+        <h2>Add Event</h2><input id="eventTitleInput" placeholder="Event Title"> <label for="eventTimeInput">Event
+          Time:</label>
+        <div><select id="eventTimeInput">
+            <option value="" disabled="disabled" selected="selected">Select time</option>
+          </select></div><label for="eventDescriptionInput">Event Description:</label> <textarea
+          id="eventDescriptionInput" placeholder="Event Description"></textarea> <button id="saveButton">Save
+          Event</button> <button id="cancelButton">Cancel</button>
+      </div>
+    </div>
+    <div id="deleteEventModal" class="modal">
+      <div class="modal-content"><span id="closeDeleteButton" class="close">×</span>
+        <h2>Event Details</h2>
+        <p id="eventText"></p><button id="addEventButton">Add New Event</button> <button id="deleteButton">Delete
+          Event</button> <button id="cancelDeleteButton">Cancel</button>
+      </div>
+    </div>
+    <div id="customPromptModal" class="modal">
+      <div class="modal-content"><span id="closePromptModal" class="close">×</span>
+        <h2>Enter Event Number to Delete</h2><input type="number" id="eventNumberInput" placeholder="Enter event number"
+          min="1"> <button id="submitEventNumber">Delete Event</button> <button id="cancelPromptModal">Cancel</button>
+      </div>
+    </div>
+    <div id="modalBackDrop" class="backdrop"></div>
+    <div id="editEventModal" style="display:none;">
+      <div class="modal-content">
+        <h2>Edit Event</h2><label for="editEventTitle">Title:</label> <input id="editEventTitle"
+          placeholder="Event Title"><br><label for="editEventTime">Event Time:</label> <select
+          id="editEventTime"></select><br><label for="editEventDescription">Description:</label> <textarea
+          id="editEventDescription" placeholder="Event Description"></textarea> <button id="saveEditedEvent">Save
+          Changes</button> <button id="cancelEditButton">Cancel</button>
+      </div>
+    </div>
+    <div id="customAlertModal2" class="custom-alert-modal">
+      <div class="custom-alert-content"><span id="closeAlertButton2" class="close-alert">×</span>
+        <h2 id="alertTitle2"></h2>
+        <p id="alertMessage2"></p><button id="closeAlertButton3" class="modal-close-button">Close</button>
+      </div>
+    </div>
+  </body>
+
+</html>
