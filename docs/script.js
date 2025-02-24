@@ -140,10 +140,6 @@ function closeModal() {
   clicked = null;
   // load();
   fetchEvents(); 
-  const modal = document.getElementById('deleteModal');
-  if (modal) {
-    modal.style.display = 'none'; // Example of closing the modal
-  }
 }
 
 
@@ -278,9 +274,17 @@ function closeCustomAlert() {
 
 
 // Add event listener to Delete button
-document.getElementById('deleteButton').addEventListener('click', deleteEvent);
-document.getElementById('closeDeleteButton').addEventListener('click', closeModal);
-document.getElementById('cancelDeleteButton').addEventListener('click', closeModal);
+
+// Cancel button for the delete modal
+// document.getElementById('cancelDeleteButton').addEventListener('click', closeModal);
+
+// // Delete event button logic
+// document.getElementById('deleteButton').addEventListener('click', deleteEvent);
+// document.getElementById('closeDeleteButton').addEventListener('click', closeModal);
+
+// document.getElementById('deleteButton').addEventListener('click', deleteEvent);
+// document.getElementById('closeDeleteButton').addEventListener('click', closeModal);
+// document.getElementById('cancelDeleteButton').addEventListener('click', closeModal);
 
 
 // function deleteEvent() {
@@ -308,6 +312,7 @@ document.getElementById('cancelDeleteButton').addEventListener('click', closeMod
 //   });
 // }
 
+
 function deleteEvent() {
   showCustomPrompt(async (eventIndex) => {
     const indexToDelete = parseInt(eventIndex) - 1;
@@ -319,7 +324,7 @@ function deleteEvent() {
       try {
         // Delete from Firestore using document ID
         await deleteDoc(doc(db, 'events', eventToDelete.id));
-        await fetchEvents(); // Refresh events from database
+        await fetchEvents(); // Refresh events from the database
         showCustomAlert('Success', 'Event deleted successfully!');
       } catch (error) {
         console.error("Error deleting document: ", error);
@@ -328,9 +333,33 @@ function deleteEvent() {
     } else {
       showCustomAlert('Error', 'Invalid event number.');
     }
-    closeModal();
+    closeModal();  // Close the modal after the deletion
   });
 }
+
+// function deleteEvent() {
+//   showCustomPrompt(async (eventIndex) => {
+//     const indexToDelete = parseInt(eventIndex) - 1;
+//     const eventsForDay = events.filter(e => e.date === clicked);
+
+//     if (indexToDelete >= 0 && indexToDelete < eventsForDay.length) {
+//       const eventToDelete = eventsForDay[indexToDelete];
+      
+//       try {
+//         // Delete from Firestore using document ID
+//         await deleteDoc(doc(db, 'events', eventToDelete.id));
+//         await fetchEvents(); // Refresh events from database
+//         showCustomAlert('Success', 'Event deleted successfully!');
+//       } catch (error) {
+//         console.error("Error deleting document: ", error);
+//         showCustomAlert('Error', 'Failed to delete event.');
+//       }
+//     } else {
+//       showCustomAlert('Error', 'Invalid event number.');
+//     }
+//     closeModal();
+//   });
+// }
 
 document.getElementById('cancelDeleteButton').addEventListener('click', closeModal);
 
@@ -456,14 +485,18 @@ function initButtons() {
 
   document.getElementById('saveButton').addEventListener('click', saveEvent);
 
-  document.getElementById('cancelButton').addEventListener('click', closeModal);
-  document.getElementById('closeButton').addEventListener('click', closeModal);
-  document.getElementById('closeDeleteButton').addEventListener('click', closeModal);
+  // document.getElementById('cancelButton').addEventListener('click', closeModal);
+  // document.getElementById('closeButton').addEventListener('click', closeModal);
+  // document.getElementById('closeDeleteButton').addEventListener('click', closeModal);
 
   document.getElementById('addEventButton').addEventListener('click', () => {
     deleteEventModal.style.display = 'none';
     newEventModal.style.display = 'block';
   });
+
+  document.getElementById('deleteButton').addEventListener('click', deleteEvent);
+  document.getElementById('cancelDeleteButton').addEventListener('click', closeModal);
+  document.getElementById('closeDeleteButton').addEventListener('click', closeModal);
 }
 
 // Initialize the app
