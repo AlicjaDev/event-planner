@@ -1,135 +1,272 @@
 import { initializeApp } from "firebase/app";
-import { getFirestore, collection, getDocs, addDoc, doc, deleteDoc } from "firebase/firestore";
-import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from 'firebase/auth';
+import { getFirestore, collection, getDocs, addDoc, doc, deleteDoc, updateDoc, query, where } from "firebase/firestore";
+import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "firebase/auth";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
-// Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyASZJUbaKS5ZeZzhXNtOB9q30LcxlL3Fq4",
   authDomain: "eventplanner-8daa7.firebaseapp.com",
   projectId: "eventplanner-8daa7",
   storageBucket: "eventplanner-8daa7.appspot.com",
   messagingSenderId: "180139946253",
-  appId: "1:180139946253:web:9b487c5b102dfeded9c044",
-  measurementId: "G-NC4EPER0GW"
+  appId: "1:180139946253:web:9b487c5b102dfeded9c044"
 };
 
-// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth();
 const provider = new GoogleAuthProvider();
+let currentUser = null;
 
 let nav = 0;
-let clicked = null;
+let selectedDate = null;
 let events = [];
 
-const calendar = document.getElementById('calendar');
+// DOM Elements
+const calendarEl = document.getElementById('calendar');
+const monthDisplayEl = document.getElementById('monthDisplay');
 const newEventModal = document.getElementById('newEventModal');
-const backDrop = document.getElementById('modalBackDrop');
+const deleteEventModal = document.getElementById('deleteEventModal');
+const editEventModal = document.getElementById('editEventModal');
 const eventTitleInput = document.getElementById('eventTitleInput');
 const eventTimeInput = document.getElementById('eventTimeInput');
-const weekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const eventDescriptionInput = document.getElementById('eventDescriptionInput');
 
-// Get the events from Firestore
-const getEvents = async () => {
-  const querySnapshot = await getDocs(collection(db, "events"));
-  events = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-  renderCalendar();
-};
-
-// Add event to Firestore
-const addEventToFirestore = async (date, title, time, description) => {
-  try {
-    await addDoc(collection(db, "events"), {
-      date,
-      title,
-      time,
-      description
-    });
-    getEvents();
-  } catch (error) {
-    console.error("Error adding event: ", error);
-  }
-};
-
-// Delete event from Firestore
-const deleteEventFromFirestore = async (eventId) => {
-  try {
-    await deleteDoc(doc(db, "events", eventId));
-    getEvents();
-  } catch (error) {
-    console.error("Error deleting event: ", error);
-  }
-};
-
-// Show the modal to add an event
-const openAddEventModal = (date) => {
-  clicked = date;
-  newEventModal.style.display = "block";
-  eventTitleInput.value = '';
-  eventTimeInput.value = '';
-  document.getElementById('eventDescriptionInput').value = '';
-};
-
-// Render the calendar
-const renderCalendar = () => {
-  const currentDate = new Date();
-  const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
-  const lastDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
-
-  const daysInMonth = lastDayOfMonth.getDate();
-  let calendarHTML = '';
-  for (let i = 1; i <= daysInMonth; i++) {
-    const currentDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), i);
-    const dayName = weekdays[currentDay.getDay()];
-    const event = events.find(event => new Date(event.date).toLocaleDateString() === currentDay.toLocaleDateString());
-    
-    calendarHTML += `<div class="calendar-day" onclick="openAddEventModal('${currentDay.toLocaleDateString()}')">
-                      <div class="day-number">${i}</div>`;
-    
-    if (event) {
-      calendarHTML += `<div class="event">${event.title}</div>`;
-    }
-    calendarHTML += `</div>`;
-  }
-  calendar.innerHTML = calendarHTML;
-};
-
-// Save event after user fills in details
-const saveEvent = () => {
-  const title = eventTitleInput.value;
-  const time = eventTimeInput.value;
-  const description = document.getElementById('eventDescriptionInput').value;
-
-  if (title && time && description) {
-    addEventToFirestore(clicked, title, time, description);
-    newEventModal.style.display = "none";
-    backDrop.style.display = "none";
-  } else {
-    alert("Please fill in all the fields.");
-  }
-};
-
-// Close modal
-const closeModal = () => {
-  newEventModal.style.display = "none";
-  backDrop.style.display = "none";
-};
-
-// Event listeners for modal actions
-document.getElementById('saveButton').addEventListener('click', saveEvent);
-document.getElementById('cancelButton').addEventListener('click', closeModal);
-
-// Firebase authentication listener
+// Authentication
 onAuthStateChanged(auth, (user) => {
-  if (!user) {
+  if (user) {
+    currentUser = user;
+    document.getElementById('signin-btn').style.display = 'none';
+    document.getElementById('signout-btn').style.display = 'block';
+    loadEvents();
+    initCalendar();
+  } else {
     window.location.href = 'signin.html';
   }
 });
 
-// Initialize and load the calendar events
-getEvents();
+document.getElementById('signin-btn').addEventListener('click', () => {
+  signInWithPopup(auth, provider);
+});
 
+document.getElementById('signout-btn').addEventListener('click', () => {
+  auth.signOut();
+  localStorage.removeItem('authenticated');
+});
+
+// Calendar Initialization
+function initCalendar() {
+  const date = new Date();
+  if (nav !== 0) date.setMonth(new Date().getMonth() + nav);
+  renderCalendar(date);
+}
+
+function renderCalendar(date) {
+  calendarEl.innerHTML = '';
+  monthDisplayEl.textContent = 
+    `${date.toLocaleDateString('en-US', { month: 'long' })} ${date.getFullYear()}`;
+
+  const month = date.getMonth();
+  const year = date.getFullYear();
+  const firstDay = new Date(year, month, 1);
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  
+  const dateString = firstDay.toLocaleDateString('en-us', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'numeric',
+    day: 'numeric',
+  });
+  
+  const paddingDays = weekdays.indexOf(dateString.split(', ')[0]);
+  
+  for (let i = 1; i <= paddingDays + daysInMonth; i++) {
+    const daySquare = document.createElement('div');
+    daySquare.classList.add('day');
+    
+    if (i > paddingDays) {
+      const day = i - paddingDays;
+      daySquare.textContent = day;
+      const dayString = `${month + 1}/${day}/${year}`;
+      
+      const dayEvents = events.filter(ev => ev.date === dayString);
+      dayEvents.sort((a, b) => a.time.localeCompare(b.time));
+      
+      dayEvents.forEach(event => {
+        const eventDiv = document.createElement('div');
+        eventDiv.classList.add('event');
+        eventDiv.innerHTML = `
+          <strong>${event.time}</strong>: ${event.title}
+          <div class="event-actions">
+            <button class="edit-btn" data-id="${event.id}">✎</button>
+            <button class="delete-btn" data-id="${event.id}">✕</button>
+          </div>
+        `;
+        daySquare.appendChild(eventDiv);
+      });
+
+      daySquare.addEventListener('click', () => openNewEventModal(dayString));
+    } else {
+      daySquare.classList.add('padding');
+    }
+    calendarEl.appendChild(daySquare);
+  }
+}
+
+// Event Management
+async function loadEvents() {
+  const q = query(collection(db, 'events'), where('userId', '==', currentUser.uid));
+  const querySnapshot = await getDocs(q);
+  events = querySnapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data()
+  }));
+  initCalendar();
+}
+
+async function saveEvent(eventData) {
+  await addDoc(collection(db, 'events'), {
+    ...eventData,
+    userId: currentUser.uid
+  });
+  loadEvents();
+}
+
+async function updateEvent(eventId, newData) {
+  await updateDoc(doc(db, 'events', eventId), newData);
+  loadEvents();
+}
+
+async function deleteEvent(eventId) {
+  await deleteDoc(doc(db, 'events', eventId));
+  loadEvents();
+}
+
+// Modal Handling
+function openNewEventModal(date) {
+  selectedDate = date;
+  generateTimeOptions(eventTimeInput);
+  newEventModal.style.display = 'block';
+}
+
+document.getElementById('saveButton').addEventListener('click', async () => {
+  const eventData = {
+    date: selectedDate,
+    title: eventTitleInput.value,
+    time: eventTimeInput.value,
+    description: eventDescriptionInput.value,
+    createdAt: new Date().toISOString()
+  };
+  
+  await saveEvent(eventData);
+  closeAllModals();
+});
+
+document.getElementById('cancelButton').addEventListener('click', closeAllModals);
+
+calendarEl.addEventListener('click', (e) => {
+  if (e.target.classList.contains('delete-btn')) {
+    const eventId = e.target.dataset.id;
+    deleteEvent(eventId);
+  }
+  
+  if (e.target.classList.contains('edit-btn')) {
+    const eventId = e.target.dataset.id;
+    const event = events.find(ev => ev.id === eventId);
+    openEditModal(event);
+  }
+});
+
+function openEditModal(event) {
+  generateTimeOptions(document.getElementById('editEventTime'));
+  document.getElementById('editEventTitle').value = event.title;
+  document.getElementById('editEventTime').value = event.time;
+  document.getElementById('editEventDescription').value = event.description;
+  editEventModal.style.display = 'block';
+  
+  document.getElementById('saveEditedEvent').onclick = async () => {
+    await updateEvent(event.id, {
+      title: document.getElementById('editEventTitle').value,
+      time: document.getElementById('editEventTime').value,
+      description: document.getElementById('editEventDescription').value
+    });
+    closeAllModals();
+  };
+}
+
+function closeAllModals() {
+  [newEventModal, deleteEventModal, editEventModal].forEach(modal => {
+    modal.style.display = 'none';
+  });
+  eventTitleInput.value = '';
+  eventTimeInput.value = '';
+  eventDescriptionInput.value = '';
+}
+
+// Utility Functions
+function generateTimeOptions(selectElement) {
+  selectElement.innerHTML = '<option value="" disabled selected>Select time</option>';
+  for (let hour = 0; hour < 24; hour++) {
+    for (let minute = 0; minute < 60; minute += 30) {
+      const time = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+      const option = document.createElement('option');
+      option.value = time;
+      option.textContent = time;
+      selectElement.appendChild(option);
+    }
+  }
+}
+
+// Navigation
+document.getElementById('nextButton').addEventListener('click', () => {
+  nav++;
+  initCalendar();
+});
+
+document.getElementById('backButton').addEventListener('click', () => {
+  nav--;
+  initCalendar();
+});
+
+// Chatbot Integration
+const genAI = new GoogleGenerativeAI('YOUR_API_KEY');
+const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+
+document.getElementById('aiButton').addEventListener('click', async () => {
+  const prompt = document.getElementById('aiInput').value;
+  const chatHistory = document.getElementById('chat-history');
+  
+  const userMessage = document.createElement('div');
+  userMessage.textContent = `You: ${prompt}`;
+  chatHistory.appendChild(userMessage);
+  
+  try {
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    
+    const aiMessage = document.createElement('div');
+    aiMessage.textContent = `AI: ${response.text()}`;
+    chatHistory.appendChild(aiMessage);
+  } catch (error) {
+    showAlert('Error', 'Failed to get AI response');
+  }
+  
+  document.getElementById('aiInput').value = '';
+});
+
+// Alert System
+function showAlert(title, message) {
+  const alertModal = document.getElementById('customAlertModal');
+  document.getElementById('alertTitle').textContent = title;
+  document.getElementById('alertMessage').textContent = message;
+  alertModal.style.display = 'block';
+}
+
+document.querySelectorAll('.close-alert, .modal-close-button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.getElementById('customAlertModal').style.display = 'none';
+  });
+});
 
 // import { initializeApp } from "firebase/app";
 // import {
@@ -581,120 +718,122 @@ getEvents();
 
 
 
+// LATERRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
+
+
+// function ruleChatBot(request) {
+//   if (request.startsWith("add event")) {
+//     let eventDetails = request.replace("add event", "").trim();
+//     if (eventDetails) {
+//       // Parse event details (title, date, time, description, etc.)
+//       let [title, date, time, description] = eventDetails.split(",").map(item => item.trim());
+//       if (title && date && time) {
+//         addEventToCalendar(title, date, time, description);
+//         appendMessage('Event ' + title + ' added!');
+//       } else {
+//         appendMessage("Please specify a title, date, and time for the event.");
+//       }
+//     } else {
+//       appendMessage("Please specify event details.");
+//     }
+//     return true;
+//   } else if (request.startsWith("remove event")) {
+//     let eventId = request.replace("remove event", "").trim();
+//     if (eventId) {
+//       if (removeEventFromCalendar(eventId)) {
+//         appendMessage('Event ' + eventId + ' removed!');
+//       } else {
+//         appendMessage("Event not found!");
+//       }
+//     } else {
+//       appendMessage("Please specify an event ID to remove.");
+//     }
+//     return true;
+//   } else if (request.startsWith("edit event")) {
+//     let eventDetails = request.replace("edit event", "").trim();
+//     if (eventDetails) {
+//       let [eventId, title, date, time, description] = eventDetails.split(",").map(item => item.trim());
+//       if (eventId && title && date && time) {
+//         editEventInCalendar(eventId, title, date, time, description);
+//         appendMessage('Event ' + title + ' updated!');
+//       } else {
+//         appendMessage("Please specify an event ID, title, date, and time for the event.");
+//       }
+//     } else {
+//       appendMessage("Please specify event details.");
+//     }
+//     return true;
+//   }
+
+//   return false;
+// }
+
+
+// aiButton.addEventListener('click', async () => {
+//   let prompt = aiInput.value.trim().toLowerCase();
+//   if (prompt) {
+//     if (!ruleChatBot(prompt)) {
+//       askChatBot(prompt);
+//     }
+//   } else {
+//     appendMessage("Please enter a prompt");
+//   }
+// });
+
+// function addEventToCalendar(title, date, time, description) {
+//   const newEventRef = firebase.database().ref('events').push();
+//   newEventRef.set({
+//     title: title,
+//     date: date,
+//     time: time,
+//     description: description || "",
+//     // email: "",
+//     // phone: "",
+//     // reminderTime: null
+//   }).then(() => {
+//     console.log("Event added successfully!");
+//   }).catch((error) => {
+//     console.error("Error adding event: ", error);
+//   });
+// }
+
+// function removeEventFromCalendar(eventId) {
+//   firebase.database().ref('events/' + eventId).remove()
+//     .then(() => {
+//       console.log("Event removed successfully!");
+//       return true;
+//     })
+//     .catch((error) => {
+//       console.error("Error removing event: ", error);
+//       return false;
+//     });
+// }
+
+// function editEventInCalendar(eventId, title, date, time, description) {
+//   firebase.database().ref('events/' + eventId).update({
+//     title: title,
+//     date: date,
+//     time: time,
+//     description: description || ""
+//   }).then(() => {
+//     console.log("Event updated successfully!");
+//   }).catch((error) => {
+//     console.error("Error updating event: ", error);
+//   });
+// }
+
+
+// function appendMessage(message) {
+//   let history = document.createElement("div");
+//   history.textContent = message;
+//   history.className = 'history';
+//   chatHistory.appendChild(history);
+//   aiInput.value = "";
+// }
 
 
 
-function ruleChatBot(request) {
-  if (request.startsWith("add event")) {
-    let eventDetails = request.replace("add event", "").trim();
-    if (eventDetails) {
-      // Parse event details (title, date, time, description, etc.)
-      let [title, date, time, description] = eventDetails.split(",").map(item => item.trim());
-      if (title && date && time) {
-        addEventToCalendar(title, date, time, description);
-        appendMessage('Event ' + title + ' added!');
-      } else {
-        appendMessage("Please specify a title, date, and time for the event.");
-      }
-    } else {
-      appendMessage("Please specify event details.");
-    }
-    return true;
-  } else if (request.startsWith("remove event")) {
-    let eventId = request.replace("remove event", "").trim();
-    if (eventId) {
-      if (removeEventFromCalendar(eventId)) {
-        appendMessage('Event ' + eventId + ' removed!');
-      } else {
-        appendMessage("Event not found!");
-      }
-    } else {
-      appendMessage("Please specify an event ID to remove.");
-    }
-    return true;
-  } else if (request.startsWith("edit event")) {
-    let eventDetails = request.replace("edit event", "").trim();
-    if (eventDetails) {
-      let [eventId, title, date, time, description] = eventDetails.split(",").map(item => item.trim());
-      if (eventId && title && date && time) {
-        editEventInCalendar(eventId, title, date, time, description);
-        appendMessage('Event ' + title + ' updated!');
-      } else {
-        appendMessage("Please specify an event ID, title, date, and time for the event.");
-      }
-    } else {
-      appendMessage("Please specify event details.");
-    }
-    return true;
-  }
-
-  return false;
-}
-
-
-aiButton.addEventListener('click', async () => {
-  let prompt = aiInput.value.trim().toLowerCase();
-  if (prompt) {
-    if (!ruleChatBot(prompt)) {
-      askChatBot(prompt);
-    }
-  } else {
-    appendMessage("Please enter a prompt");
-  }
-});
-
-function addEventToCalendar(title, date, time, description) {
-  const newEventRef = firebase.database().ref('events').push();
-  newEventRef.set({
-    title: title,
-    date: date,
-    time: time,
-    description: description || "",
-    // email: "",
-    // phone: "",
-    // reminderTime: null
-  }).then(() => {
-    console.log("Event added successfully!");
-  }).catch((error) => {
-    console.error("Error adding event: ", error);
-  });
-}
-
-function removeEventFromCalendar(eventId) {
-  firebase.database().ref('events/' + eventId).remove()
-    .then(() => {
-      console.log("Event removed successfully!");
-      return true;
-    })
-    .catch((error) => {
-      console.error("Error removing event: ", error);
-      return false;
-    });
-}
-
-function editEventInCalendar(eventId, title, date, time, description) {
-  firebase.database().ref('events/' + eventId).update({
-    title: title,
-    date: date,
-    time: time,
-    description: description || ""
-  }).then(() => {
-    console.log("Event updated successfully!");
-  }).catch((error) => {
-    console.error("Error updating event: ", error);
-  });
-}
-
-
-function appendMessage(message) {
-  let history = document.createElement("div");
-  history.textContent = message;
-  history.className = 'history';
-  chatHistory.appendChild(history);
-  aiInput.value = "";
-}
-
-
+// LATERRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
 
 
 // import { initializeApp } from "firebase/app";
