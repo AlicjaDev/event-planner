@@ -396,38 +396,38 @@ async function addEvent(title, date, time, description = '') {
 
 
 // Chatbot event listener
-document.getElementById('aiButton').addEventListener('click', async () => {
-  const prompt = document.getElementById('aiInput').value.trim().toLowerCase();
-  if (prompt) {
-    try {
-      const response = await askChatBot(prompt);
-      console.log("AI Response:", response);
+// document.getElementById('aiButton').addEventListener('click', async () => {
+//   const prompt = document.getElementById('aiInput').value.trim().toLowerCase();
+//   if (prompt) {
+//     try {
+//       const response = await askChatBot(prompt);
+//       console.log("AI Response:", response);
 
-      // Parse the AI's response to extract event details
-      if (response.includes("add event")) {
-        const eventDetails = response.replace("add event", "").trim();
-        const [title, date, time] = parseEventDetails(eventDetails);
-        if (title && date && time) {
-          await addEvent(title, date, time);
-        } else {
-          console.log("Invalid event details.");
-        }
-      } else if (response.includes("remove event")) {
-        const eventDetails = response.replace("remove event", "").trim();
-        const [title, date] = parseRemoveDetails(eventDetails);
-        if (title && date) {
-          await removeEvent(title, date);
-        } else {
-          console.log("Invalid event details.");
-        }
-      }
-    } catch (error) {
-      console.error("Error asking chatbot: ", error);
-    }
-  } else {
-    console.log("Please enter a prompt.");
-  }
-});
+//       // Parse the AI's response to extract event details
+//       if (response.includes("add event")) {
+//         const eventDetails = response.replace("add event", "").trim();
+//         const [title, date, time] = parseEventDetails(eventDetails);
+//         if (title && date && time) {
+//           await addEvent(title, date, time);
+//         } else {
+//           console.log("Invalid event details.");
+//         }
+//       } else if (response.includes("remove event")) {
+//         const eventDetails = response.replace("remove event", "").trim();
+//         const [title, date] = parseRemoveDetails(eventDetails);
+//         if (title && date) {
+//           await removeEvent(title, date);
+//         } else {
+//           console.log("Invalid event details.");
+//         }
+//       }
+//     } catch (error) {
+//       console.error("Error asking chatbot: ", error);
+//     }
+//   } else {
+//     console.log("Please enter a prompt.");
+//   }
+// });
 
 // Helper function to parse event details
 // function parseEventDetails(eventDetails) {
@@ -440,14 +440,14 @@ document.getElementById('aiButton').addEventListener('click', async () => {
 // }
 
 // Helper function to parse event details
-function parseEventDetails(eventDetails) {
-  const parts = eventDetails.split(" on ");
-  const title = parts[0].trim();
-  const dateTime = parts[1] ? parts[1].split(" at ") : [];
-  const date = dateTime[0] ? dateTime[0].trim() : null;
-  const time = dateTime[1] ? dateTime[1].trim() : null;
-  return [title, date, time];
-}
+// function parseEventDetails(eventDetails) {
+//   const parts = eventDetails.split(" on ");
+//   const title = parts[0].trim();
+//   const dateTime = parts[1] ? parts[1].split(" at ") : [];
+//   const date = dateTime[0] ? dateTime[0].trim() : null;
+//   const time = dateTime[1] ? dateTime[1].trim() : null;
+//   return [title, date, time];
+// }
 
 // Helper function to parse edit details
 function parseEditDetails(editDetails) {
@@ -462,12 +462,12 @@ function parseEditDetails(editDetails) {
 }
 
 // Helper function to parse remove details
-function parseRemoveDetails(removeDetails) {
-  const parts = removeDetails.split(" on ");
-  const title = parts[0].trim();
-  const date = parts[1] ? parts[1].trim() : null;
-  return [title, date];
-}
+// function parseRemoveDetails(removeDetails) {
+//   const parts = removeDetails.split(" on ");
+//   const title = parts[0].trim();
+//   const date = parts[1] ? parts[1].trim() : null;
+//   return [title, date];
+// }
 
 // Helper function to convert date format (e.g., "february 19 2025" -> "2/19/2025")
 function convertDateFormat(dateString) {
@@ -513,6 +513,58 @@ async function addEvent(title, date, time, description = '') {
   } catch (error) {
     console.error("Error adding event: ", error);
   }
+}
+
+// Chatbot event listener
+document.getElementById('aiButton').addEventListener('click', async () => {
+  const prompt = document.getElementById('aiInput').value.trim().toLowerCase();
+  if (prompt) {
+    try {
+      const response = await askChatBot(prompt);
+      console.log("AI Response:", response);
+
+      // Parse the AI's response to extract event details
+      if (response.includes("add event")) {
+        const eventDetails = response.replace("add event", "").trim();
+        const [title, date, time] = parseEventDetails(eventDetails);
+        if (title && date && time) {
+          await addEvent(title, date, time);
+        } else {
+          console.log("Invalid event details.");
+        }
+      } else if (response.includes("remove event")) {
+        const eventDetails = response.replace("remove event", "").trim();
+        const [title, date] = parseRemoveDetails(eventDetails);
+        if (title && date) {
+          await removeEvent(title, date);
+        } else {
+          console.log("Invalid event details.");
+        }
+      }
+    } catch (error) {
+      console.error("Error asking chatbot: ", error);
+    }
+  } else {
+    console.log("Please enter a prompt.");
+  }
+});
+
+// Helper function to parse event details
+function parseEventDetails(eventDetails) {
+  const parts = eventDetails.split(" on ");
+  const title = parts[0].trim();
+  const dateTime = parts[1] ? parts[1].split(" at ") : [];
+  const date = dateTime[0] ? dateTime[0].trim() : null;
+  const time = dateTime[1] ? dateTime[1].trim() : null;
+  return [title, date, time];
+}
+
+// Helper function to parse remove details
+function parseRemoveDetails(removeDetails) {
+  const parts = removeDetails.split(" on ");
+  const title = parts[0].trim();
+  const date = parts[1] ? parts[1].trim() : null;
+  return [title, date];
 }
 
 // // Helper function to convert date format (e.g., "february 19 2025" -> "2/19/2025")
