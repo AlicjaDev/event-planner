@@ -361,6 +361,41 @@ async function addEvent(title, date, time, description = '') {
 }
 
 // Chatbot event listener
+// document.getElementById('aiButton').addEventListener('click', async () => {
+//   const prompt = document.getElementById('aiInput').value.trim().toLowerCase();
+//   if (prompt) {
+//     try {
+//       const response = await askChatBot(prompt);
+//       console.log("AI Response:", response);
+
+//       // Parse the AI's response to extract event details
+//       if (response.includes("add event")) {
+//         const eventDetails = response.replace("add event", "").trim();
+//         const [title, date, time] = parseEventDetails(eventDetails);
+//         if (title && date && time) {
+//           await addEvent(title, date, time);
+//         } else {
+//           console.log("Invalid event details.");
+//         }
+//       } else if (response.includes("remove event")) {
+//         const eventDetails = response.replace("remove event", "").trim();
+//         const [title, date] = parseRemoveDetails(eventDetails);
+//         if (title && date) {
+//           await removeEvent(title, date);
+//         } else {
+//           console.log("Invalid event details.");
+//         }
+//       }
+//     } catch (error) {
+//       console.error("Error asking chatbot: ", error);
+//     }
+//   } else {
+//     console.log("Please enter a prompt.");
+//   }
+// });
+
+
+// Chatbot event listener
 document.getElementById('aiButton').addEventListener('click', async () => {
   const prompt = document.getElementById('aiInput').value.trim().toLowerCase();
   if (prompt) {
@@ -393,6 +428,16 @@ document.getElementById('aiButton').addEventListener('click', async () => {
     console.log("Please enter a prompt.");
   }
 });
+
+// Helper function to parse event details
+// function parseEventDetails(eventDetails) {
+//   const parts = eventDetails.split(" on ");
+//   const title = parts[0].trim();
+//   const dateTime = parts[1] ? parts[1].split(" at ") : [];
+//   const date = dateTime[0] ? dateTime[0].trim() : null;
+//   const time = dateTime[1] ? dateTime[1].trim() : null;
+//   return [title, date, time];
+// }
 
 // Helper function to parse event details
 function parseEventDetails(eventDetails) {
@@ -444,6 +489,52 @@ function convertTimeFormat(timeString) {
   const [time, period] = timeString.split(' ');
   return `${time} ${period.toUpperCase()}`;
 }
+
+// Function to add an event
+async function addEvent(title, date, time, description = '') {
+  const formattedDate = convertDateFormat(date); // Convert date format
+  const formattedTime = convertTimeFormat(time); // Convert time format
+
+  const eventData = {
+    date: formattedDate, // Use the converted date format
+    time: formattedTime, // Use the converted time format
+    title: title,
+    description: description,
+    email: "", // Add default values for optional fields
+    phone: "",
+    reminderTime: null,
+  };
+
+  try {
+    await addDoc(collection(db, 'events'), eventData);
+    events.push(eventData); // Add the new event to the global array
+    load(); // Refresh the calendar
+    console.log(`Event "${title}" added on ${formattedDate} at ${formattedTime}.`);
+  } catch (error) {
+    console.error("Error adding event: ", error);
+  }
+}
+
+// // Helper function to convert date format (e.g., "february 19 2025" -> "2/19/2025")
+// function convertDateFormat(dateString) {
+//   const months = {
+//     january: 1, february: 2, march: 3, april: 4, may: 5, june: 6,
+//     july: 7, august: 8, september: 9, october: 10, november: 11, december: 12,
+//   };
+
+//   const parts = dateString.toLowerCase().split(' ');
+//   const month = months[parts[0]];
+//   const day = parts[1];
+//   const year = parts[2];
+
+//   return `${month}/${day}/${year}`;
+// }
+
+// // Helper function to convert time format (e.g., "10:00 am" -> "10:00 AM")
+// function convertTimeFormat(timeString) {
+//   const [time, period] = timeString.split(' ');
+//   return `${time} ${period.toUpperCase()}`;
+// }
 
 // Toggle chatbot visibility
 const toggleButton = document.getElementById('toggle-chatbot');
