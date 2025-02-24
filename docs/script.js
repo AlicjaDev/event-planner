@@ -671,7 +671,6 @@ function parseRemoveDetails(removeDetails) {
 }
 
 
-
 document.getElementById('aiButton').addEventListener('click', async () => {
   const prompt = document.getElementById('aiInput').value.trim().toLowerCase();
   if (prompt) {
