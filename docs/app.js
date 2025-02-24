@@ -55,13 +55,6 @@ export async function askChatBot(request) {
 
 
 
-
-
-
-
-
-
-
 // Fetch the API key from Firebase
 // export async function getApiKey() {
 //   try {
