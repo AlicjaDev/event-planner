@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Planter</title>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+    
+
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    
+    <div id="container">
+      <div id="header">
+        <div id="monthDisplay"></div>
+        <div>
+          <button id="backButton">Backward</button>
+          <button id="nextButton">Forward</button>
+        </div>
+      </div>
+
+      <div id="weekdays">
+        <div>Sunday</div>
+        <div>Monday</div>
+        <div>Tuesday</div>
+        <div>Wednesday</div>
+        <div>Thursday</div>
+        <div>Friday</div>
+        <div>Saturday</div>
+      </div>
+
+      <div id="calendar"></div>
+    </div>
+
+    <!-- <div id="newEventModal">
+      <h2>New Event</h2>
+
+      <input id="eventTitleInput" placeholder="Event Title" />
+
+      <button id="saveButton">Save</button>
+      <button id="cancelButton">Cancel</button>
+    </div> -->
+
+
+<!-- Delete Event Modal -->
+<div id="deleteEventModal" class="modal">
+  <div class="modal-content">
+    <h2>Event Details</h2>
+    <p id="eventText"></p>
+    <div class="modal-buttons">
+      <button id="addEventButton">Add New Event</button>
+      <button id="deleteButton">Delete Event</button>
+      <button id="closeButton">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Custom Alert Modal -->
+<!-- <div id="customAlertModal" class="custom-alert-modal">
+  <div class="custom-alert-content">
+    <span id="closeAlertButton" class="close-alert">X</span>
+    <h2 id="alertTitle"></h2>
+    <p id="alertMessage"></p>
+    <button id="alertCloseButton">Close</button>
+  </div>
+</div>
+
+
+<div id="modalBackdrop" class="modal-backdrop"></div>
+
+ -->
+
+<!-- Custom Prompt Modal -->
+<!-- <div id="customPromptModal" class="custom-prompt-modal">
+  <div class="custom-prompt-content">
+    <span id="closePromptButton" class="close-prompt">X</span>
+    <h2>Enter the number of the event you want to delete:</h2>
+    <input type="number" id="promptInput" class="prompt-input" placeholder="Event number" />
+    <div class="modal-buttons">
+      <button id="confirmPromptButton">OK</button>
+      <button id="cancelPromptButton">Cancel</button>
+    </div>
+  </div>
+</div> -->
+
+
+<div id="customAlertModal" class="custom-alert-modal">
+  <div class="custom-alert-content">
+    <span id="closeAlertButton" class="close-alert">X</span>
+    <h2 id="alertTitle"></h2>
+    <p id="alertMessage"></p>
+    <button id="closeAlertButton2" class="modal-close-button">Close</button> <!-- Updated ID -->
+  </div>
+</div>
+
+<!-- Modal Backdrop -->
+<div id="modalBackdrop" class="modal-backdrop"></div>
+
+
+
+
+    <!-- <div id="deleteEventModal" class="modal">
+      <div class="modal-content">
+        <span id="closeDeleteButton" class="close"></span>
+        <h2>Event Details</h2>
+        <p id="eventText"></p>
+        <div class="modal-buttons">
+          <button id="addEventButton">Add New Event</button>
+          <button id="deleteButton">Delete Event</button>
+          <button id="closeButton">Close</button>
+        </div>
+      </div>
+    </div> -->
+
+    <!-- <div id="modalBackDrop"></div> -->
+
+
+    <div id="newEventModal" class="modal">
+      <div class="modal-content">
+        <span id="closeButton" class="close"></span>
+        <h2>Add Event</h2>
+        <input type="text" id="eventTitleInput" placeholder="Event Title">
+        
+        <!-- Time Dropdown -->
+
+        <label for="eventTimeInput">Event Time:</label>
+        <div>
+          <select id="eventTimeInput">
+            <option value="" disabled selected>Select time</option>
+          </select>
+        </div>
+        
+
+        <!-- <label for="eventTimeInput">Event Time:</label>
+        <div>
+          <input type="text" id="eventTimeInput" placeholder="Select time" />
+        </div> -->
+        <!-- <select id="eventTimeInput">
+ 
+        </select> -->
+        
+        <label for="eventDescriptionInput">Event Description:</label>
+        <textarea id="eventDescriptionInput" placeholder="Event Description"></textarea>
+        
+        <!-- Reminder Options -->
+        <h3>Set Reminder</h3>
+        <input type="email" id="emailInput" placeholder="Email for Reminder (optional)">
+        <input type="tel" id="phoneInput" placeholder="Phone for SMS (optional)">
+        <label for="reminderTimeInput">Reminder Time (in minutes before event):</label>
+        <input type="number" id="reminderTimeInput" placeholder="Minutes before event">
+        
+        <button id="saveButton">Save Event</button>
+        <button id="cancelButton">Cancel</button>
+      </div>
+    </div>
+    <!-- <div id="newEventModal" class="modal">
+        <div class="modal-content">
+            <span id="closeButton" class="close">&times;</span>
+            <h2>Add Event</h2>
+            <input type="text" id="eventTitleInput" placeholder="Event Title">
+            <input type="time" id="eventTimeInput" placeholder="Event Time">
+            <textarea id="eventDescriptionInput" placeholder="Event Description"></textarea>
+            
+       
+            <h3>Set Reminder</h3>
+            <input type="email" id="emailInput" placeholder="Email for Reminder (optional)">
+            <input type="tel" id="phoneInput" placeholder="Phone for SMS (optional)">
+            <label for="reminderTimeInput">Reminder Time (in minutes before event):</label>
+            <input type="number" id="reminderTimeInput" placeholder="Minutes before event">
+            
+            <button id="saveButton">Save Event</button>
+            <button id="cancelButton">Cancel</button>
+        </div>
+    </div> -->
+    
+    <div id="deleteEventModal" class="modal">
+        <div class="modal-content">
+            <span id="closeDeleteButton" class="close"></span>
+            <h2>Event Details</h2>
+            <p id="eventText"></p>
+            <button id="deleteButton">Delete Event</button>
+            <button id="cancelDeleteButton">Cancel</button>
+        </div>
+    </div>
+    
+    <!-- Backdrop -->
+    <div id="modalBackDrop" class="backdrop"></div>
+    
+
+    <script src="./script.js"></script>
+  </body>
+</html>
