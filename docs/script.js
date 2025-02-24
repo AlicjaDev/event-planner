@@ -58,79 +58,6 @@ async function fetchEvents() {
   }
 }
 
-// Render the calendar
-function load() {
-  console.log("Rendering calendar..."); // Debugging
-  console.log("Events:", events); // Debugging
-
-  const dt = new Date();
-
-  if (nav !== 0) {
-    dt.setMonth(new Date().getMonth() + nav);
-  }
-
-  const day = dt.getDate();
-  const month = dt.getMonth();
-  const year = dt.getFullYear();
-
-  const firstDayOfMonth = new Date(year, month, 1);
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-  const dateString = firstDayOfMonth.toLocaleDateString('en-us', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'numeric',
-    day: 'numeric',
-  });
-  const paddingDays = weekdays.indexOf(dateString.split(', ')[0]);
-
-  document.getElementById('monthDisplay').innerText =
-    `${dt.toLocaleDateString('en-us', { month: 'long' })} ${year}`;
-
-  calendar.innerHTML = '';
-
-  for (let i = 1; i <= paddingDays + daysInMonth; i++) {
-    const daySquare = document.createElement('div');
-    daySquare.classList.add('day');
-
-    const dayString = `${month + 1}/${i - paddingDays}/${year}`;
-
-    if (i > paddingDays) {
-      daySquare.innerText = i - paddingDays;
-      const eventsForDay = events.filter((e) => e.date === dayString);
-
-      console.log(`Events for ${dayString}:`, eventsForDay); // Debugging
-
-      if (i - paddingDays === day && nav === 0) {
-        daySquare.id = 'currentDay';
-      }
-
-      if (eventsForDay.length > 0) {
-        eventsForDay
-          .sort((a, b) => timeToMinutes(a.time) - timeToMinutes(b.time))
-          .forEach((event) => {
-            const eventDiv = document.createElement('div');
-            eventDiv.classList.add('event');
-            eventDiv.innerHTML = `<strong>${event.time} - ${event.title}</strong>`;
-            if (event.description) {
-              const descriptionDiv = document.createElement('div');
-              descriptionDiv.classList.add('event-description');
-              descriptionDiv.innerText = event.description;
-              eventDiv.appendChild(descriptionDiv);
-            }
-            daySquare.appendChild(eventDiv);
-          });
-      }
-
-      daySquare.addEventListener('click', () => openModal(dayString));
-    } else {
-      daySquare.classList.add('padding');
-    }
-
-    calendar.appendChild(daySquare);
-  }
-}
-
 // Helper function to convert time to minutes past midnight
 function timeToMinutes(time) {
   const [hourMin, period] = time.split(' ');
@@ -214,7 +141,227 @@ function closeModal() {
   load();
 }
 
-// Function to save an event
+
+
+function showCustomPrompt(callback) {
+  // Show the modal
+  const modal = document.getElementById('customPromptModal');
+  const inputField = document.getElementById('eventNumberInput');
+  
+  // Display the modal
+  modal.style.display = 'flex';
+
+  // Handle the submit button click
+  document.getElementById('submitEventNumber').addEventListener('click', function() {
+  //   const eventIndex = inputField.value.trim();
+  //   if (eventIndex !== "") {
+  //     callback(eventIndex);  // Pass the event index to the callback
+  //     modal.style.display = 'none';  // Close the modal after submission
+  //   } else {
+  //     alert("Please enter a valid event number.");
+  //   }
+  // });
+
+  const eventIndex = inputField.value.trim();
+if (eventIndex !== "" && !isNaN(eventIndex) && eventIndex > 0) {
+  callback(eventIndex);  // Pass the event index to the callback
+  modal.style.display = 'none';  // Close the modal after submission
+} else {
+  alert("Please enter a valid event number.");
+}
+});
+
+  // Handle the cancel button click
+  document.getElementById('cancelPromptModal').addEventListener('click', function() {
+    modal.style.display = 'none';  // Close the modal without action
+  });
+
+  // Close the modal when clicking the "X" button
+  document.getElementById('closePromptModal').addEventListener('click', function() {
+    modal.style.display = 'none';  // Close the modal
+  });
+
+  // Close modal if the backdrop (area outside the modal) is clicked
+  window.addEventListener('click', function(event) {
+    if (event.target === modal) {
+      modal.style.display = 'none';
+    }
+  });
+}
+
+
+document.addEventListener("DOMContentLoaded", function() {
+  // Your code here that interacts with DOM elements
+  initButtons();
+  fetchEvents();
+  // Other code that needs the DOM ready
+});
+
+
+function showCustomAlert(title, message) {
+  // Set the title and message of the alert
+  document.getElementById('alertTitle').textContent = title;
+  document.getElementById('alertMessage').textContent = message;
+  
+  // Show the alert modal and backdrop
+  document.getElementById('customAlertModal').style.display = 'block';
+  document.getElementById('modalBackdrop').style.display = 'block';
+
+  // List of buttons that should close the modal
+  const closeButtons = ['closeAlertButton2', 'closeAlertButton', 'modalBackdrop'];
+  
+  // Attach click event listener for each close button
+  closeButtons.forEach(buttonId => {
+    const button = document.getElementById(buttonId);
+    if (button) {
+      button.onclick = closeCustomAlert;
+    }
+  });
+}
+
+// Close alert modal (success/incorrect)
+document.getElementById('closeAlertButton').addEventListener('click', function() {
+  document.getElementById('customAlertModal').style.display = 'none';
+});
+document.getElementById('closeAlertButton2').addEventListener('click', function() {
+  document.getElementById('customAlertModal').style.display = 'none';
+});
+
+// Close delete event modal
+document.getElementById('closeDeleteButton').addEventListener('click', function() {
+  document.getElementById('deleteEventModal').style.display = 'none';
+});
+
+// Cancel button for delete modal
+document.getElementById('cancelDeleteButton').addEventListener('click', function() {
+  document.getElementById('deleteEventModal').style.display = 'none';
+});
+
+// Close new event modal
+document.getElementById('closeButton').addEventListener('click', function() {
+  document.getElementById('newEventModal').style.display = 'none';
+});
+
+// Close modal by clicking backdrop (optional but a nice touch)
+document.getElementById('modalBackDrop').addEventListener('click', function() {
+  document.getElementById('deleteEventModal').style.display = 'none';
+  document.getElementById('newEventModal').style.display = 'none';
+  document.getElementById('customAlertModal').style.display = 'none';
+});
+
+
+// Function to close the custom alert modal
+function closeCustomAlert() {
+  // Hide the modal and backdrop
+  document.getElementById('customAlertModal').style.display = 'none';
+  document.getElementById('modalBackdrop').style.display = 'none';
+}
+
+
+// Add event listener to Delete button
+document.getElementById('deleteButton').addEventListener('click', deleteEvent);
+document.getElementById('closeDeleteButton').addEventListener('click', closeModal);
+document.getElementById('cancelDeleteButton').addEventListener('click', closeModal);
+
+
+function deleteEvent() {
+  // Show the custom prompt modal and pass the callback function for handling input
+  showCustomPrompt(function (eventIndex) {
+    const indexToDelete = parseInt(eventIndex) - 1; // Subtract 1 to convert to zero-based index
+    const eventsForDay = events.filter(e => e.date === clicked); // Filter events for the selected day
+
+    if (indexToDelete >= 0 && indexToDelete < eventsForDay.length) {
+      // Find the event to delete
+      const eventToDelete = eventsForDay[indexToDelete];
+
+      // Remove the event from the events array
+      events = events.filter(e => !(e.date === clicked && e.time === eventToDelete.time && e.title === eventToDelete.title));
+
+      // Save the updated events array to localStorage
+      localStorage.setItem('events', JSON.stringify(events));
+
+      // Show success alert
+      showCustomAlert('Event Deleted', 'The event has been deleted successfully.');
+    } else {
+      // Show error alert
+      showCustomAlert('Invalid Event', 'Invalid event number. Please try again.');
+    }
+  });
+}
+
+document.getElementById('cancelDeleteButton').addEventListener('click', closeModal);
+
+
+function load() {
+  const dt = new Date();
+
+  if (nav !== 0) {
+    dt.setMonth(new Date().getMonth() + nav);
+  }
+
+  const day = dt.getDate();
+  const month = dt.getMonth();
+  const year = dt.getFullYear();
+
+  const firstDayOfMonth = new Date(year, month, 1);
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+  const dateString = firstDayOfMonth.toLocaleDateString('en-us', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'numeric',
+    day: 'numeric',
+  });
+  const paddingDays = weekdays.indexOf(dateString.split(', ')[0]);
+
+  document.getElementById('monthDisplay').innerText =
+    `${dt.toLocaleDateString('en-us', { month: 'long' })} ${year}`;
+
+  calendar.innerHTML = '';
+
+  for (let i = 1; i <= paddingDays + daysInMonth; i++) {
+    const daySquare = document.createElement('div');
+    daySquare.classList.add('day');
+
+    const dayString = `${month + 1}/${i - paddingDays}/${year}`;
+
+    if (i > paddingDays) {
+      daySquare.innerText = i - paddingDays;
+      const eventsForDay = events.filter((e) => e.date === dayString);
+
+      if (i - paddingDays === day && nav === 0) {
+        daySquare.id = 'currentDay';
+      }
+
+      if (eventsForDay.length > 0) {
+        // Sort the events by time using timeToMinutes function
+        eventsForDay
+          .sort((a, b) => timeToMinutes(a.time) - timeToMinutes(b.time)) // Sort by time
+          .forEach((event) => {
+            const eventDiv = document.createElement('div');
+            eventDiv.classList.add('event');
+            eventDiv.innerHTML = `<strong>${event.time} - ${event.title}</strong>`; // Time and title
+            if (event.description) {
+              // Show event description if it exists
+              const descriptionDiv = document.createElement('div');
+              descriptionDiv.classList.add('event-description');
+              descriptionDiv.innerText = event.description;
+              eventDiv.appendChild(descriptionDiv);
+            }
+            daySquare.appendChild(eventDiv);
+          });
+      }
+
+      daySquare.addEventListener('click', () => openModal(dayString));
+    } else {
+      daySquare.classList.add('padding');
+    }
+
+    calendar.appendChild(daySquare);
+  }
+}
+
+
 async function saveEvent() {
   const eventTitle = eventTitleInput.value.trim();
   const eventTime = eventTimeInput.value;
@@ -228,16 +375,16 @@ async function saveEvent() {
       time: eventTime,
       title: eventTitle,
       description: document.getElementById('eventDescriptionInput').value.trim(),
-      // reminderTime: document.getElementById('reminderTimeInput').value ? parseInt(document.getElementById('reminderTimeInput').value) : null,
-      // email: document.getElementById('emailInput').value.trim(),
-      // phone: document.getElementById('phoneInput').value.trim(),
     };
 
     try {
+      // Save the event to Firestore
       await addDoc(collection(db, 'events'), eventData);
-      events.push(eventData); // Add the new event to the global array
-      closeModal();
-      load(); // Reload the calendar
+
+      // Re-fetch events from Firestore to include the new event
+      await fetchEvents();
+
+      closeModal();  // Close the modal after saving
     } catch (error) {
       console.error("Error adding document: ", error);
     }
@@ -250,6 +397,7 @@ async function saveEvent() {
     }
   }
 }
+
 
 // Initialize buttons
 function initButtons() {
