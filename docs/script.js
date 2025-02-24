@@ -1,24 +1,13 @@
 import { initializeApp } from "firebase/app";
-import {
-  getFirestore,
-  collection,
-  getDocs,
-  addDoc,
-  doc,
-  deleteDoc,
-} from "firebase/firestore";
-import { getApiKey, askChatBot } from './app.js';
+import { getFirestore, collection, getDocs, addDoc, doc, deleteDoc } from "firebase/firestore";
 import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from 'firebase/auth';
-
-let genAI;
-let model;
 
 // Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyASZJUbaKS5ZeZzhXNtOB9q30LcxlL3Fq4",
   authDomain: "eventplanner-8daa7.firebaseapp.com",
   projectId: "eventplanner-8daa7",
-  storageBucket: "eventplanner-8daa7.firebasestorage.app",
+  storageBucket: "eventplanner-8daa7.appspot.com",
   messagingSenderId: "180139946253",
   appId: "1:180139946253:web:9b487c5b102dfeded9c044",
   measurementId: "G-NC4EPER0GW"
@@ -32,339 +21,114 @@ const provider = new GoogleAuthProvider();
 
 let nav = 0;
 let clicked = null;
-let events = []; // Global variable to store events
+let events = [];
 
 const calendar = document.getElementById('calendar');
 const newEventModal = document.getElementById('newEventModal');
-const deleteEventModal = document.getElementById('deleteEventModal');
 const backDrop = document.getElementById('modalBackDrop');
 const eventTitleInput = document.getElementById('eventTitleInput');
 const eventTimeInput = document.getElementById('eventTimeInput');
 const weekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
-// Fetch events from Firestore
-async function fetchEvents() {
+// Get the events from Firestore
+const getEvents = async () => {
+  const querySnapshot = await getDocs(collection(db, "events"));
+  events = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  renderCalendar();
+};
+
+// Add event to Firestore
+const addEventToFirestore = async (date, title, time, description) => {
   try {
-    const querySnapshot = await getDocs(collection(db, 'events'));
-    events = []; // Clear the global events array
-    querySnapshot.forEach((doc) => {
-      events.push({ id: doc.id, ...doc.data() }); // Store the document ID and data
+    await addDoc(collection(db, "events"), {
+      date,
+      title,
+      time,
+      description
     });
-    console.log("Events fetched:", events); // Debugging
-    load(); // Render the calendar after fetching events
+    getEvents();
   } catch (error) {
-    console.error("Error fetching events:", error);
+    console.error("Error adding event: ", error);
   }
-}
+};
 
-// Generate 30-minute time intervals
-function generateTimeIntervals() {
-  const timeOptions = [];
-  const startTime = 0; // Start at 12:00 AM (0 minutes)
-  const endTime = 1440; // End at 12:00 AM (1440 minutes = 24 hours)
-  const interval = 30; // 30-minute intervals
-
-  for (let minutes = startTime; minutes < endTime; minutes += interval) {
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    const hour12 = hours % 12 === 0 ? 12 : hours % 12; // Handle 12:00 PM and 12:00 AM correctly
-    const timeString = `${String(hour12).padStart(2, '0')}:${String(mins).padStart(2, '0')} ${hours < 12 ? 'AM' : 'PM'}`;
-    timeOptions.push({ value: timeString, label: timeString });
+// Delete event from Firestore
+const deleteEventFromFirestore = async (eventId) => {
+  try {
+    await deleteDoc(doc(db, "events", eventId));
+    getEvents();
+  } catch (error) {
+    console.error("Error deleting event: ", error);
   }
+};
 
-  return timeOptions;
-}
-
-// Initialize the Choices dropdown for event time
-document.addEventListener('DOMContentLoaded', () => {
-  const timeOptions = generateTimeIntervals();
-  const timeDropdown = new Choices('#eventTimeInput', {
-    choices: timeOptions,
-    placeholder: true,
-    placeholderValue: 'Select time',
-    searchEnabled: false,
-    shouldSort: false,
-    itemSelectText: '',
-  });
-});
-
-// Open the modal for adding or viewing events
-function openModal(date) {
-  console.log('Setting clicked to:', date); // Debug log
+// Show the modal to add an event
+const openAddEventModal = (date) => {
   clicked = date;
-
-  const eventsForDay = events.filter(e => e.date === clicked);
-
-  if (eventsForDay.length > 0) {
-    // Sort events based on time in minutes
-    document.getElementById('eventText').innerHTML = eventsForDay
-      .sort((a, b) => timeToMinutes(a.time) - timeToMinutes(b.time)) // Sort by time
-      .map((e, index) => {
-        return `
-          <div>
-            <strong>${index + 1}. ${e.time} - ${e.title}</strong>
-            ${e.description ? `<p>${e.description}</p>` : ''}
-          </div>
-        `;
-      })
-      .join('');
-    deleteEventModal.style.display = 'block';
-  } else {
-    newEventModal.style.display = 'block';
-  }
-
-  backDrop.style.display = 'block';
-}
-
-// Close the modal
-function closeModal() {
-  newEventModal.style.display = 'none';
-  deleteEventModal.style.display = 'none';
-  backDrop.style.display = 'none';
+  newEventModal.style.display = "block";
   eventTitleInput.value = '';
   eventTimeInput.value = '';
   document.getElementById('eventDescriptionInput').value = '';
-  load(); // Refresh the calendar
-}
+};
 
-// Show a custom prompt for deleting events
-function showCustomPrompt(callback) {
-  const modal = document.getElementById('customPromptModal');
-  const inputField = document.getElementById('eventNumberInput');
-  
-  // Display the modal
-  modal.style.display = 'flex';
+// Render the calendar
+const renderCalendar = () => {
+  const currentDate = new Date();
+  const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+  const lastDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
 
-  document.getElementById('submitEventNumber').addEventListener('click', function() {
-    const eventIndex = inputField.value.trim();
-    if (eventIndex !== "") {
-      callback(eventIndex);  // Pass the event index to the callback
-      modal.style.display = 'none';  // Close the modal after submission
-    } else {
-      alert("Please enter a valid event number.");
-    }
-  });
-
-  // Handle the cancel button click
-  document.getElementById('cancelPromptModal').addEventListener('click', function() {
-    modal.style.display = 'none';  // Close the modal without action
-  });
-
-  // Close the modal when clicking the "X" button
-  document.getElementById('closePromptModal').addEventListener('click', function() {
-    modal.style.display = 'none';  // Close the modal
-  });
-
-  // Close modal if the backdrop (area outside the modal) is clicked
-  window.addEventListener('click', function(event) {
-    if (event.target === modal) {
-      modal.style.display = 'none';
-    }
-  });
-}
-
-// Show a custom alert
-function showCustomAlert(title, message) {
-  document.getElementById('alertTitle').textContent = title;
-  document.getElementById('alertMessage').textContent = message;
-  document.getElementById('customAlertModal').style.display = 'block';
-  document.getElementById('modalBackdrop').style.display = 'block';
-
-  const closeButtons = ['closeAlertButton2', 'closeAlertButton', 'modalBackdrop'];
-  closeButtons.forEach(buttonId => {
-    const button = document.getElementById(buttonId);
-    if (button) {
-      button.onclick = closeCustomAlert;
-    }
-  });
-}
-
-// Close the custom alert modal
-function closeCustomAlert() {
-  document.getElementById('customAlertModal').style.display = 'none';
-  document.getElementById('modalBackdrop').style.display = 'none';
-}
-
-// Delete an event
-function deleteEvent() {
-  showCustomPrompt(async (eventIndex) => {
-    const indexToDelete = parseInt(eventIndex) - 1;
-    const eventsForDay = events.filter(e => e.date === clicked);
-
-    if (indexToDelete < 0 || indexToDelete >= eventsForDay.length) {
-      showCustomAlert('Error', 'Invalid event number.');
-      return;
-    }
-
-    const eventToDelete = eventsForDay[indexToDelete];
+  const daysInMonth = lastDayOfMonth.getDate();
+  let calendarHTML = '';
+  for (let i = 1; i <= daysInMonth; i++) {
+    const currentDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), i);
+    const dayName = weekdays[currentDay.getDay()];
+    const event = events.find(event => new Date(event.date).toLocaleDateString() === currentDay.toLocaleDateString());
     
-    try {
-      await deleteDoc(doc(db, 'events', eventToDelete.id)); // Use the correct ID
-      await fetchEvents(); // Reload events
-      showCustomAlert('Success', 'Event deleted!');
-    } catch (error) {
-      console.error("Delete error:", error);
-      showCustomAlert('Error', 'Failed to delete event.');
+    calendarHTML += `<div class="calendar-day" onclick="openAddEventModal('${currentDay.toLocaleDateString()}')">
+                      <div class="day-number">${i}</div>`;
+    
+    if (event) {
+      calendarHTML += `<div class="event">${event.title}</div>`;
     }
-    closeModal();
-  });
-}
-
-// Load the calendar
-function load() {
-  const dt = new Date();
-
-  if (nav !== 0) {
-    dt.setMonth(new Date().getMonth() + nav);
+    calendarHTML += `</div>`;
   }
+  calendar.innerHTML = calendarHTML;
+};
 
-  const day = dt.getDate();
-  const month = dt.getMonth();
-  const year = dt.getFullYear();
+// Save event after user fills in details
+const saveEvent = () => {
+  const title = eventTitleInput.value;
+  const time = eventTimeInput.value;
+  const description = document.getElementById('eventDescriptionInput').value;
 
-  const firstDayOfMonth = new Date(year, month, 1);
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-  const dateString = firstDayOfMonth.toLocaleDateString('en-us', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'numeric',
-    day: 'numeric',
-  });
-  const paddingDays = weekdays.indexOf(dateString.split(', ')[0]);
-
-  document.getElementById('monthDisplay').innerText =
-    `${dt.toLocaleDateString('en-us', { month: 'long' })} ${year}`;
-
-  calendar.innerHTML = '';
-
-  for (let i = 1; i <= paddingDays + daysInMonth; i++) {
-    const daySquare = document.createElement('div');
-    daySquare.classList.add('day');
-
-    const dayString = `${month + 1}/${i - paddingDays}/${year}`;
-
-    if (i > paddingDays) {
-      daySquare.innerText = i - paddingDays;
-      const eventsForDay = events.filter((e) => e.date === dayString);
-
-      if (i - paddingDays === day && nav === 0) {
-        daySquare.id = 'currentDay';
-      }
-
-      if (eventsForDay.length > 0) {
-        eventsForDay
-          .sort((a, b) => timeToMinutes(a.time) - timeToMinutes(b.time)) // Sort by time
-          .forEach((event) => {
-            const eventDiv = document.createElement('div');
-            eventDiv.classList.add('event');
-            eventDiv.innerHTML = `<strong>${event.time} - ${event.title}</strong>`;
-            if (event.description) {
-              const descriptionDiv = document.createElement('div');
-              descriptionDiv.classList.add('event-description');
-              descriptionDiv.innerText = event.description;
-              eventDiv.appendChild(descriptionDiv);
-            }
-            daySquare.appendChild(eventDiv);
-          });
-      }
-
-      daySquare.addEventListener('click', () => openModal(dayString));
-    } else {
-      daySquare.classList.add('padding');
-    }
-
-    calendar.appendChild(daySquare);
-  }
-}
-
-// Save an event
-async function saveEvent() {
-  console.log('Save event triggered'); // Debug log
-
-  if (!clicked) {
-    showCustomAlert('Error', 'No date selected!');
-    return;
-  }
-
-  const eventTitle = eventTitleInput.value.trim();
-  const eventTime = eventTimeInput.value;
-
-  if (eventTitle && eventTime) {
-    eventTitleInput.classList.remove('error');
-    eventTimeInput.classList.remove('error');
-
-    // Format the clicked date as MM/DD/YYYY
-    const clickedDate = new Date(clicked);
-    const formattedDate = `${clickedDate.getMonth() + 1}/${clickedDate.getDate()}/${clickedDate.getFullYear()}`;
-
-    const eventData = {
-      date: formattedDate, // Use the formatted date
-      time: eventTime,
-      title: eventTitle,
-      description: document.getElementById('eventDescriptionInput').value.trim(),
-    };
-
-    try {
-      await addDoc(collection(db, 'events'), eventData);
-      console.log('Event saved:', eventData); // Debug log
-      await fetchEvents(); // Re-fetch events
-      closeModal(); // Close the modal after saving
-    } catch (error) {
-      console.error("Error adding document: ", error);
-      showCustomAlert('Error', 'Failed to save event.');
-    }
+  if (title && time && description) {
+    addEventToFirestore(clicked, title, time, description);
+    newEventModal.style.display = "none";
+    backDrop.style.display = "none";
   } else {
-    if (!eventTitle) {
-      eventTitleInput.classList.add('error');
-    }
-    if (!eventTime) {
-      eventTimeInput.classList.add('error');
-    }
+    alert("Please fill in all the fields.");
   }
-}
+};
 
-// Initialize buttons
-let listenersInitialized = false;
+// Close modal
+const closeModal = () => {
+  newEventModal.style.display = "none";
+  backDrop.style.display = "none";
+};
 
-function initButtons() {
-  if (listenersInitialized) return;
-  listenersInitialized = true;
+// Event listeners for modal actions
+document.getElementById('saveButton').addEventListener('click', saveEvent);
+document.getElementById('cancelButton').addEventListener('click', closeModal);
 
-  document.getElementById('nextButton').addEventListener('click', () => {
-    nav++;
-    load();
-  });
-
-  document.getElementById('backButton').addEventListener('click', () => {
-    nav--;
-    load();
-  });
-
-  document.getElementById('saveButton').addEventListener('click', saveEvent);
-
-  document.getElementById('cancelButton').addEventListener('click', closeModal);
-
-  document.getElementById('addEventButton').addEventListener('click', () => {
-    if (!clicked) {
-      showCustomAlert('Error', 'Please select a date first!');
-      return;
-    }
-    deleteEventModal.style.display = 'none';
-    newEventModal.style.display = 'block';
-  });
-
-  document.getElementById('deleteButton').addEventListener('click', deleteEvent);
-  document.getElementById('cancelDeleteButton').addEventListener('click', closeModal);
-  document.getElementById('closeDeleteButton').addEventListener('click', closeModal);
-}
-
-// Initialize the app
-document.addEventListener('DOMContentLoaded', async () => {
-  await getApiKey(); // Initialize the chatbot API key and model
-  fetchEvents(); // Fetch events from Firestore
-  initButtons(); // Initialize buttons
+// Firebase authentication listener
+onAuthStateChanged(auth, (user) => {
+  if (!user) {
+    window.location.href = 'signin.html';
+  }
 });
+
+// Initialize and load the calendar events
+getEvents();
 
 
 // import { initializeApp } from "firebase/app";
