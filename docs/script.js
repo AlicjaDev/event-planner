@@ -44,18 +44,25 @@ const eventTimeInput = document.getElementById('eventTimeInput');
 const weekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 // Fetch events from Firestore
+// async function fetchEvents() {
+//   try {
+//     const querySnapshot = await getDocs(collection(db, 'events'));
+//     events = []; // Clear the global events array
+//     querySnapshot.forEach((doc) => {
+//       events.push({ id: doc.id, ...doc.data() }); // Store the document ID and data
+//     });
+//     console.log("Events fetched:", events); // Debugging
+//     load(); // Render the calendar after fetching events
+//   } catch (error) {
+//     console.error("Error fetching events:", error);
+//   }
+// }
+
 async function fetchEvents() {
-  try {
-    const querySnapshot = await getDocs(collection(db, 'events'));
-    events = []; // Clear the global events array
-    querySnapshot.forEach((doc) => {
-      events.push({ id: doc.id, ...doc.data() }); // Store the document ID and data
-    });
-    console.log("Events fetched:", events); // Debugging
-    load(); // Render the calendar after fetching events
-  } catch (error) {
-    console.error("Error fetching events:", error);
-  }
+  const eventsCol = collection(db, 'events');
+  const snapshot = await getDocs(eventsCol);
+  events = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); // Include document ID
+  load(); // Refresh the calendar
 }
 
 // Helper function to convert time to minutes past midnight
@@ -137,6 +144,7 @@ function closeModal() {
   backDrop.style.display = 'none';
   eventTitleInput.value = '';
   eventTimeInput.value = '';
+  document.getElementById('eventDescriptionInput').value = '';
   clicked = null;
   // load();
   fetchEvents(); 
@@ -312,30 +320,53 @@ document.getElementById('closeDeleteButton').addEventListener('click', closeModa
 //   });
 // }
 
-
 function deleteEvent() {
   showCustomPrompt(async (eventIndex) => {
     const indexToDelete = parseInt(eventIndex) - 1;
     const eventsForDay = events.filter(e => e.date === clicked);
 
-    if (indexToDelete >= 0 && indexToDelete < eventsForDay.length) {
-      const eventToDelete = eventsForDay[indexToDelete];
-      
-      try {
-        // Delete from Firestore using document ID
-        await deleteDoc(doc(db, 'events', eventToDelete.id));
-        await fetchEvents(); // Refresh events from the database
-        showCustomAlert('Success', 'Event deleted successfully!');
-      } catch (error) {
-        console.error("Error deleting document: ", error);
-        showCustomAlert('Error', 'Failed to delete event.');
-      }
-    } else {
+    if (indexToDelete < 0 || indexToDelete >= eventsForDay.length) {
       showCustomAlert('Error', 'Invalid event number.');
+      return;
     }
-    closeModal();  // Close the modal after the deletion
+
+    const eventToDelete = eventsForDay[indexToDelete];
+    
+    try {
+      await deleteDoc(doc(db, 'events', eventToDelete.id)); // Use the correct ID
+      await fetchEvents(); // Reload events
+      showCustomAlert('Success', 'Event deleted!');
+    } catch (error) {
+      console.error("Delete error:", error);
+      showCustomAlert('Error', 'Failed to delete event.');
+    }
+    closeModal();
   });
 }
+
+// function deleteEvent() {
+//   showCustomPrompt(async (eventIndex) => {
+//     const indexToDelete = parseInt(eventIndex) - 1;
+//     const eventsForDay = events.filter(e => e.date === clicked);
+
+//     if (indexToDelete >= 0 && indexToDelete < eventsForDay.length) {
+//       const eventToDelete = eventsForDay[indexToDelete];
+      
+//       try {
+//         // Delete from Firestore using document ID
+//         await deleteDoc(doc(db, 'events', eventToDelete.id));
+//         await fetchEvents(); // Refresh events from the database
+//         showCustomAlert('Success', 'Event deleted successfully!');
+//       } catch (error) {
+//         console.error("Error deleting document: ", error);
+//         showCustomAlert('Error', 'Failed to delete event.');
+//       }
+//     } else {
+//       showCustomAlert('Error', 'Invalid event number.');
+//     }
+//     closeModal();  // Close the modal after the deletion
+//   });
+// }
 
 // function deleteEvent() {
 //   showCustomPrompt(async (eventIndex) => {
@@ -435,6 +466,13 @@ function load() {
 
 
 async function saveEvent() {
+
+  if (!clicked) {
+    showCustomAlert('Error', 'No date selected!');
+    return;
+  }
+
+
   const eventTitle = eventTitleInput.value.trim();
   const eventTime = eventTimeInput.value;
 
@@ -470,9 +508,15 @@ async function saveEvent() {
   }
 }
 
+let listenersInitialized = false;
+
 
 // Initialize buttons
 function initButtons() {
+
+  if (listenersInitialized) return;
+  listenersInitialized = true;
+
   document.getElementById('nextButton').addEventListener('click', () => {
     nav++;
     load();
@@ -489,10 +533,22 @@ function initButtons() {
   // document.getElementById('closeButton').addEventListener('click', closeModal);
   // document.getElementById('closeDeleteButton').addEventListener('click', closeModal);
 
-  document.getElementById('addEventButton').addEventListener('click', () => {
-    deleteEventModal.style.display = 'none';
-    newEventModal.style.display = 'block';
-  });
+
+
+// Modify your "Add Event" button handler
+document.getElementById('addEventButton').addEventListener('click', () => {
+  if (!clicked) {
+    showCustomAlert('Error', 'Please select a date first!');
+    return;
+  }
+  deleteEventModal.style.display = 'none';
+  newEventModal.style.display = 'block';
+});
+
+  // document.getElementById('addEventButton').addEventListener('click', () => {
+  //   deleteEventModal.style.display = 'none';
+  //   newEventModal.style.display = 'block';
+  // });
 
   document.getElementById('deleteButton').addEventListener('click', deleteEvent);
   document.getElementById('cancelDeleteButton').addEventListener('click', closeModal);
