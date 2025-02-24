@@ -228,9 +228,9 @@ async function saveEvent() {
       time: eventTime,
       title: eventTitle,
       description: document.getElementById('eventDescriptionInput').value.trim(),
-      reminderTime: document.getElementById('reminderTimeInput').value ? parseInt(document.getElementById('reminderTimeInput').value) : null,
-      email: document.getElementById('emailInput').value.trim(),
-      phone: document.getElementById('phoneInput').value.trim(),
+      // reminderTime: document.getElementById('reminderTimeInput').value ? parseInt(document.getElementById('reminderTimeInput').value) : null,
+      // email: document.getElementById('emailInput').value.trim(),
+      // phone: document.getElementById('phoneInput').value.trim(),
     };
 
     try {
@@ -275,93 +275,6 @@ function initButtons() {
   });
 }
 
-// Chatbot event listener
-document.getElementById('aiButton').addEventListener('click', async () => {
-  const prompt = document.getElementById('aiInput').value.trim().toLowerCase();
-  if (prompt) {
-    try {
-      const response = await askChatBot(prompt);
-      console.log("AI Response:", response);
-
-      // Parse the AI's response to extract event details
-      if (response.includes("add event")) {
-        const eventDetails = response.replace("add event", "").trim();
-        const [title, date, time] = parseEventDetails(eventDetails);
-
-        console.log("Parsed Title:", title); // Debugging
-        console.log("Parsed Date:", date); // Debugging
-        console.log("Parsed Time:", time); // Debugging
-
-        if (title && date && time) {
-          await addEvent(title, date, time);
-        } else {
-          console.log("Invalid event details.");
-        }
-      }
-    } catch (error) {
-      console.error("Error asking chatbot: ", error);
-    }
-  } else {
-    console.log("Please enter a prompt.");
-  }
-});
-
-// Helper function to parse event details
-function parseEventDetails(eventDetails) {
-  const parts = eventDetails.split(" on ");
-  const title = parts[0].trim();
-  const dateTime = parts[1] ? parts[1].split(" at ") : [];
-  const date = dateTime[0] ? dateTime[0].trim() : null;
-  const time = dateTime[1] ? dateTime[1].trim() : null;
-  return [title, date, time];
-}
-
-// Helper function to convert date format (e.g., "february 19 2025" -> "2/19/2025")
-function convertDateFormat(dateString) {
-  const months = {
-    january: 1, february: 2, march: 3, april: 4, may: 5, june: 6,
-    july: 7, august: 8, september: 9, october: 10, november: 11, december: 12,
-  };
-
-  const parts = dateString.toLowerCase().split(' ');
-  const month = months[parts[0]];
-  const day = parts[1];
-  const year = parts[2];
-
-  return `${month}/${day}/${year}`;
-}
-
-// Helper function to convert time format (e.g., "10:00 am" -> "10:00 AM")
-function convertTimeFormat(timeString) {
-  const [time, period] = timeString.split(' ');
-  return `${time} ${period.toUpperCase()}`;
-}
-
-// Function to add an event
-async function addEvent(title, date, time, description = '') {
-  const formattedDate = convertDateFormat(date); // Convert date format
-  const formattedTime = convertTimeFormat(time); // Convert time format
-
-  const eventData = {
-    date: formattedDate, // Use the converted date format
-    time: formattedTime, // Use the converted time format
-    title: title,
-    description: description,
-    email: "", // Add default values for optional fields
-    phone: "",
-    reminderTime: null,
-  };
-
-  try {
-    await addDoc(collection(db, 'events'), eventData);
-    events.push(eventData); // Add the new event to the global array
-    load(); // Refresh the calendar
-    console.log(`Event "${title}" added on ${formattedDate} at ${formattedTime}.`);
-  } catch (error) {
-    console.error("Error adding event: ", error);
-  }
-}
-
 // Initialize the app
 document.addEventListener('DOMContentLoaded', async () => {
   await getApiKey(); // Initialize the chatbot API key and model
@@ -370,17 +283,118 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 
-// Adding an input and button to communicate with the chatbot
-const chatInput = document.getElementById('chatInput'); // A text input field for user message
-const sendButton = document.getElementById('sendButton'); // A button to trigger chatbot interaction
 
-sendButton.addEventListener('click', async () => {
-  const request = chatInput.value.trim();
-  if (request) {
-    // Call the processBotRequest function to interact with the bot
-    await processBotRequest(request);
+
+function ruleChatBot(request) {
+  if (request.startsWith("add event")) {
+    let eventDetails = request.replace("add event", "").trim();
+    if (eventDetails) {
+      // Parse event details (title, date, time, description, etc.)
+      let [title, date, time, description] = eventDetails.split(",").map(item => item.trim());
+      if (title && date && time) {
+        addEventToCalendar(title, date, time, description);
+        appendMessage('Event ' + title + ' added!');
+      } else {
+        appendMessage("Please specify a title, date, and time for the event.");
+      }
+    } else {
+      appendMessage("Please specify event details.");
+    }
+    return true;
+  } else if (request.startsWith("remove event")) {
+    let eventId = request.replace("remove event", "").trim();
+    if (eventId) {
+      if (removeEventFromCalendar(eventId)) {
+        appendMessage('Event ' + eventId + ' removed!');
+      } else {
+        appendMessage("Event not found!");
+      }
+    } else {
+      appendMessage("Please specify an event ID to remove.");
+    }
+    return true;
+  } else if (request.startsWith("edit event")) {
+    let eventDetails = request.replace("edit event", "").trim();
+    if (eventDetails) {
+      let [eventId, title, date, time, description] = eventDetails.split(",").map(item => item.trim());
+      if (eventId && title && date && time) {
+        editEventInCalendar(eventId, title, date, time, description);
+        appendMessage('Event ' + title + ' updated!');
+      } else {
+        appendMessage("Please specify an event ID, title, date, and time for the event.");
+      }
+    } else {
+      appendMessage("Please specify event details.");
+    }
+    return true;
+  }
+
+  return false;
+}
+
+
+aiButton.addEventListener('click', async () => {
+  let prompt = aiInput.value.trim().toLowerCase();
+  if (prompt) {
+    if (!ruleChatBot(prompt)) {
+      askChatBot(prompt);
+    }
+  } else {
+    appendMessage("Please enter a prompt");
   }
 });
+
+function addEventToCalendar(title, date, time, description) {
+  const newEventRef = firebase.database().ref('events').push();
+  newEventRef.set({
+    title: title,
+    date: date,
+    time: time,
+    description: description || "",
+    // email: "",
+    // phone: "",
+    // reminderTime: null
+  }).then(() => {
+    console.log("Event added successfully!");
+  }).catch((error) => {
+    console.error("Error adding event: ", error);
+  });
+}
+
+function removeEventFromCalendar(eventId) {
+  firebase.database().ref('events/' + eventId).remove()
+    .then(() => {
+      console.log("Event removed successfully!");
+      return true;
+    })
+    .catch((error) => {
+      console.error("Error removing event: ", error);
+      return false;
+    });
+}
+
+function editEventInCalendar(eventId, title, date, time, description) {
+  firebase.database().ref('events/' + eventId).update({
+    title: title,
+    date: date,
+    time: time,
+    description: description || ""
+  }).then(() => {
+    console.log("Event updated successfully!");
+  }).catch((error) => {
+    console.error("Error updating event: ", error);
+  });
+}
+
+
+function appendMessage(message) {
+  let history = document.createElement("div");
+  history.textContent = message;
+  history.className = 'history';
+  chatHistory.appendChild(history);
+  aiInput.value = "";
+}
+
 
 
 
