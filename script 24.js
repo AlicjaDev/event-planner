@@ -44,22 +44,6 @@ const eventTitleInput = document.getElementById('eventTitleInput');
 const eventTimeInput = document.getElementById('eventTimeInput');
 const weekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
-// Fetch events from Firestore
-// async function fetchEvents() {
-//   try {
-//     const querySnapshot = await getDocs(collection(db, 'events'));
-//     events = []; // Clear the global events array
-//     querySnapshot.forEach((doc) => {
-//       events.push({ id: doc.id, ...doc.data() }); // Store the document ID and data
-//     });
-//     console.log("Events fetched:", events); // Debugging
-//     load(); // Render the calendar after fetching events
-//   } catch (error) {
-//     console.error("Error fetching events:", error);
-//   }
-// }
-
-
 async function fetchEvents() {
   try {
     const querySnapshot = await getDocs(collection(db, 'events'));
@@ -166,8 +150,6 @@ function closeModal() {
    load();
   //fetchEvents(); 
 }
-
-
 
 function showCustomPrompt(callback) {
   // Show the modal

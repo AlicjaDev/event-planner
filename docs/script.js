@@ -1,382 +1,248 @@
+import { initializeApp } from "firebase/app";
+import { getFirestore, collection, getDocs, addDoc, doc, deleteDoc, updateDoc, query, where } from "firebase/firestore";
+import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "firebase/auth";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
-// Check authentication state
+const firebaseConfig = {
+  apiKey: "AIzaSyASZJUbaKS5ZeZzhXNtOB9q30LcxlL3Fq4",
+  authDomain: "eventplanner-8daa7.firebaseapp.com",
+  projectId: "eventplanner-8daa7",
+  storageBucket: "eventplanner-8daa7.appspot.com",
+  messagingSenderId: "180139946253",
+  appId: "1:180139946253:web:9b487c5b102dfeded9c044"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth();
+const provider = new GoogleAuthProvider();
+let currentUser = null;
+
+let nav = 0;
+let selectedDate = null;
+let events = [];
+
+// DOM Elements
+const calendarEl = document.getElementById('calendar');
+const monthDisplayEl = document.getElementById('monthDisplay');
+const newEventModal = document.getElementById('newEventModal');
+const deleteEventModal = document.getElementById('deleteEventModal');
+const editEventModal = document.getElementById('editEventModal');
+const eventTitleInput = document.getElementById('eventTitleInput');
+const eventTimeInput = document.getElementById('eventTimeInput');
+const eventDescriptionInput = document.getElementById('eventDescriptionInput');
+
+// Authentication
 onAuthStateChanged(auth, (user) => {
-  if (!user) {
-    window.location.href = 'signin.html';
-  } else {
+  if (user) {
+    currentUser = user;
+    document.getElementById('signin-btn').style.display = 'none';
+    document.getElementById('signout-btn').style.display = 'block';
+    loadEvents();
     initCalendar();
+  } else {
+    window.location.href = 'signin.html';
   }
 });
 
-// Initialize calendar
+document.getElementById('signin-btn').addEventListener('click', () => {
+  signInWithPopup(auth, provider);
+});
+
+document.getElementById('signout-btn').addEventListener('click', () => {
+  auth.signOut();
+  localStorage.removeItem('authenticated');
+});
+
+// Calendar Initialization
 function initCalendar() {
-  const monthDisplay = document.getElementById('monthDisplay');
-  const calendar = document.getElementById('calendar');
-  const backButton = document.getElementById('backButton');
-  const nextButton = document.getElementById('nextButton');
-
-  let currentDate = new Date();
-
-  // Render calendar
-  function renderCalendar() {
-    // Clear previous calendar
-    calendar.innerHTML = '';
-
-    // Set month display
-    monthDisplay.textContent = currentDate.toLocaleString('default', { month: 'long', year: 'numeric' });
-
-    // Render days
-    const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
-    const lastDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
-    const daysInMonth = lastDayOfMonth.getDate();
-
-    for (let i = 1; i <= daysInMonth; i++) {
-      const day = document.createElement('div');
-      day.textContent = i;
-      day.addEventListener('click', () => openEventModal(new Date(currentDate.getFullYear(), currentDate.getMonth(), i)));
-      calendar.appendChild(day);
-    }
-  }
-
-  // Navigation
-  backButton.addEventListener('click', () => {
-    currentDate.setMonth(currentDate.getMonth() - 1);
-    renderCalendar();
-  });
-
-  nextButton.addEventListener('click', () => {
-    currentDate.setMonth(currentDate.getMonth() + 1);
-    renderCalendar();
-  });
-
-  // Initial render
-  renderCalendar();
+  const date = new Date();
+  if (nav !== 0) date.setMonth(new Date().getMonth() + nav);
+  renderCalendar(date);
 }
 
-// Event Modal
-function openEventModal(date) {
-  const modal = document.getElementById('newEventModal');
-  modal.style.display = 'block';
+function renderCalendar(date) {
+  calendarEl.innerHTML = '';
+  monthDisplayEl.textContent = 
+    `${date.toLocaleDateString('en-US', { month: 'long' })} ${date.getFullYear()}`;
 
-  const saveButton = document.getElementById('saveButton');
-  const cancelButton = document.getElementById('cancelButton');
-
-  saveButton.addEventListener('click', () => {
-    const eventTitle = document.getElementById('eventTitleInput').value;
-    const eventTime = document.getElementById('eventTimeInput').value;
-    const eventDescription = document.getElementById('eventDescriptionInput').value;
-
-    if (eventTitle && eventTime && eventDescription) {
-      saveEvent(date, eventTitle, eventTime, eventDescription);
-      modal.style.display = 'none';
-    } else {
-      alert('Please fill in all fields.');
-    }
+  const month = date.getMonth();
+  const year = date.getFullYear();
+  const firstDay = new Date(year, month, 1);
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  
+  const dateString = firstDay.toLocaleDateString('en-us', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'numeric',
+    day: 'numeric',
   });
+  
+  const paddingDays = weekdays.indexOf(dateString.split(', ')[0]);
+  
+  for (let i = 1; i <= paddingDays + daysInMonth; i++) {
+    const daySquare = document.createElement('div');
+    daySquare.classList.add('day');
+    
+    if (i > paddingDays) {
+      const day = i - paddingDays;
+      daySquare.textContent = day;
+      const dayString = `${month + 1}/${day}/${year}`;
+      
+      const dayEvents = events.filter(ev => ev.date === dayString);
+      dayEvents.sort((a, b) => a.time.localeCompare(b.time));
+      
+      dayEvents.forEach(event => {
+        const eventDiv = document.createElement('div');
+        eventDiv.classList.add('event');
+        eventDiv.innerHTML = `
+          <strong>${event.time}</strong>: ${event.title}
+          <div class="event-actions">
+            <button class="edit-btn" data-id="${event.id}">✎</button>
+            <button class="delete-btn" data-id="${event.id}">✕</button>
+          </div>
+        `;
+        daySquare.appendChild(eventDiv);
+      });
 
-  cancelButton.addEventListener('click', () => {
+      daySquare.addEventListener('click', () => openNewEventModal(dayString));
+    } else {
+      daySquare.classList.add('padding');
+    }
+    calendarEl.appendChild(daySquare);
+  }
+}
+
+// Event Management
+async function loadEvents() {
+  const q = query(collection(db, 'events'), where('userId', '==', currentUser.uid));
+  const querySnapshot = await getDocs(q);
+  events = querySnapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data()
+  }));
+  initCalendar();
+}
+
+async function saveEvent(eventData) {
+  await addDoc(collection(db, 'events'), {
+    ...eventData,
+    userId: currentUser.uid
+  });
+  loadEvents();
+}
+
+async function updateEvent(eventId, newData) {
+  await updateDoc(doc(db, 'events', eventId), newData);
+  loadEvents();
+}
+
+async function deleteEvent(eventId) {
+  await deleteDoc(doc(db, 'events', eventId));
+  loadEvents();
+}
+
+// Modal Handling
+function openNewEventModal(date) {
+  selectedDate = date;
+  generateTimeOptions(eventTimeInput);
+  newEventModal.style.display = 'block';
+}
+
+document.getElementById('saveButton').addEventListener('click', async () => {
+  const eventData = {
+    date: selectedDate,
+    title: eventTitleInput.value,
+    time: eventTimeInput.value,
+    description: eventDescriptionInput.value,
+    createdAt: new Date().toISOString()
+  };
+  
+  await saveEvent(eventData);
+  closeAllModals();
+});
+
+document.getElementById('cancelButton').addEventListener('click', closeAllModals);
+
+calendarEl.addEventListener('click', (e) => {
+  if (e.target.classList.contains('delete-btn')) {
+    const eventId = e.target.dataset.id;
+    deleteEvent(eventId);
+  }
+  
+  if (e.target.classList.contains('edit-btn')) {
+    const eventId = e.target.dataset.id;
+    const event = events.find(ev => ev.id === eventId);
+    openEditModal(event);
+  }
+});
+
+function openEditModal(event) {
+  generateTimeOptions(document.getElementById('editEventTime'));
+  document.getElementById('editEventTitle').value = event.title;
+  document.getElementById('editEventTime').value = event.time;
+  document.getElementById('editEventDescription').value = event.description;
+  editEventModal.style.display = 'block';
+  
+  document.getElementById('saveEditedEvent').onclick = async () => {
+    await updateEvent(event.id, {
+      title: document.getElementById('editEventTitle').value,
+      time: document.getElementById('editEventTime').value,
+      description: document.getElementById('editEventDescription').value
+    });
+    closeAllModals();
+  };
+}
+
+function closeAllModals() {
+  [newEventModal, deleteEventModal, editEventModal].forEach(modal => {
     modal.style.display = 'none';
   });
+  eventTitleInput.value = '';
+  eventTimeInput.value = '';
+  eventDescriptionInput.value = '';
 }
 
-// Save Event to Firestore
-async function saveEvent(date, title, time, description) {
-  try {
-    await addDoc(collection(db, 'events'), {
-      date: date.toISOString(),
-      title,
-      time,
-      description
-    });
-    alert('Event saved successfully!');
-  } catch (error) {
-    console.error('Error saving event: ', error);
-    alert('Failed to save event.');
+// Utility Functions
+function generateTimeOptions(selectElement) {
+  selectElement.innerHTML = '<option value="" disabled selected>Select time</option>';
+  for (let hour = 0; hour < 24; hour++) {
+    for (let minute = 0; minute < 60; minute += 30) {
+      const time = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+      const option = document.createElement('option');
+      option.value = time;
+      option.textContent = time;
+      selectElement.appendChild(option);
+    }
   }
 }
 
-// Load Events from Firestore
-async function loadEvents() {
-  const querySnapshot = await getDocs(collection(db, 'events'));
-  querySnapshot.forEach((doc) => {
-    const event = doc.data();
-    // Render event on the calendar
+// Navigation
+document.getElementById('nextButton').addEventListener('click', () => {
+  nav++;
+  initCalendar();
+});
+
+document.getElementById('backButton').addEventListener('click', () => {
+  nav--;
+  initCalendar();
+});
+
+
+
+// Alert System
+function showAlert(title, message) {
+  const alertModal = document.getElementById('customAlertModal');
+  document.getElementById('alertTitle').textContent = title;
+  document.getElementById('alertMessage').textContent = message;
+  alertModal.style.display = 'block';
+}
+
+document.querySelectorAll('.close-alert, .modal-close-button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.getElementById('customAlertModal').style.display = 'none';
   });
-}
-
-// Chatbot Integration
-const chatbotButton = document.getElementById('toggle-chatbot');
-const chatbotContent = document.getElementById('chatbot-content');
-const aiInput = document.getElementById('aiInput');
-const aiButton = document.getElementById('aiButton');
-
-chatbotButton.addEventListener('click', () => {
-  chatbotContent.style.display = chatbotContent.style.display === 'none' ? 'block' : 'none';
 });
-
-aiButton.addEventListener('click', async () => {
-  const message = aiInput.value;
-  if (message) {
-    const response = await generateResponse(message);
-    const chatHistory = document.getElementById('chat-history');
-    chatHistory.innerHTML += `<div>You: ${message}</div>`;
-    chatHistory.innerHTML += `<div>Bot: ${response}</div>`;
-    aiInput.value = '';
-  }
-});
-
-async function generateResponse(message) {
-  // Use Google's Generative AI to generate a response
-  // Placeholder for actual implementation
-  return `Response to: ${message}`;
-}
-
-
-// import { initializeApp } from "firebase/app";
-// import { getFirestore, collection, getDocs, addDoc, doc, deleteDoc, updateDoc, query, where } from "firebase/firestore";
-// import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "firebase/auth";
-// import { GoogleGenerativeAI } from "@google/generative-ai";
-
-// const firebaseConfig = {
-//   apiKey: "AIzaSyASZJUbaKS5ZeZzhXNtOB9q30LcxlL3Fq4",
-//   authDomain: "eventplanner-8daa7.firebaseapp.com",
-//   projectId: "eventplanner-8daa7",
-//   storageBucket: "eventplanner-8daa7.appspot.com",
-//   messagingSenderId: "180139946253",
-//   appId: "1:180139946253:web:9b487c5b102dfeded9c044"
-// };
-
-// const app = initializeApp(firebaseConfig);
-// const db = getFirestore(app);
-// const auth = getAuth();
-// const provider = new GoogleAuthProvider();
-// let currentUser = null;
-
-// let nav = 0;
-// let selectedDate = null;
-// let events = [];
-
-// // DOM Elements
-// const calendarEl = document.getElementById('calendar');
-// const monthDisplayEl = document.getElementById('monthDisplay');
-// const newEventModal = document.getElementById('newEventModal');
-// const deleteEventModal = document.getElementById('deleteEventModal');
-// const editEventModal = document.getElementById('editEventModal');
-// const eventTitleInput = document.getElementById('eventTitleInput');
-// const eventTimeInput = document.getElementById('eventTimeInput');
-// const eventDescriptionInput = document.getElementById('eventDescriptionInput');
-
-// // Authentication
-// onAuthStateChanged(auth, (user) => {
-//   if (user) {
-//     currentUser = user;
-//     document.getElementById('signin-btn').style.display = 'none';
-//     document.getElementById('signout-btn').style.display = 'block';
-//     loadEvents();
-//     initCalendar();
-//   } else {
-//     window.location.href = 'signin.html';
-//   }
-// });
-
-// document.getElementById('signin-btn').addEventListener('click', () => {
-//   signInWithPopup(auth, provider);
-// });
-
-// document.getElementById('signout-btn').addEventListener('click', () => {
-//   auth.signOut();
-//   localStorage.removeItem('authenticated');
-// });
-
-// // Calendar Initialization
-// function initCalendar() {
-//   const date = new Date();
-//   if (nav !== 0) date.setMonth(new Date().getMonth() + nav);
-//   renderCalendar(date);
-// }
-
-// function renderCalendar(date) {
-//   calendarEl.innerHTML = '';
-//   monthDisplayEl.textContent = 
-//     `${date.toLocaleDateString('en-US', { month: 'long' })} ${date.getFullYear()}`;
-
-//   const month = date.getMonth();
-//   const year = date.getFullYear();
-//   const firstDay = new Date(year, month, 1);
-//   const daysInMonth = new Date(year, month + 1, 0).getDate();
-  
-//   const dateString = firstDay.toLocaleDateString('en-us', {
-//     weekday: 'long',
-//     year: 'numeric',
-//     month: 'numeric',
-//     day: 'numeric',
-//   });
-  
-//   const paddingDays = weekdays.indexOf(dateString.split(', ')[0]);
-  
-//   for (let i = 1; i <= paddingDays + daysInMonth; i++) {
-//     const daySquare = document.createElement('div');
-//     daySquare.classList.add('day');
-    
-//     if (i > paddingDays) {
-//       const day = i - paddingDays;
-//       daySquare.textContent = day;
-//       const dayString = `${month + 1}/${day}/${year}`;
-      
-//       const dayEvents = events.filter(ev => ev.date === dayString);
-//       dayEvents.sort((a, b) => a.time.localeCompare(b.time));
-      
-//       dayEvents.forEach(event => {
-//         const eventDiv = document.createElement('div');
-//         eventDiv.classList.add('event');
-//         eventDiv.innerHTML = `
-//           <strong>${event.time}</strong>: ${event.title}
-//           <div class="event-actions">
-//             <button class="edit-btn" data-id="${event.id}">✎</button>
-//             <button class="delete-btn" data-id="${event.id}">✕</button>
-//           </div>
-//         `;
-//         daySquare.appendChild(eventDiv);
-//       });
-
-//       daySquare.addEventListener('click', () => openNewEventModal(dayString));
-//     } else {
-//       daySquare.classList.add('padding');
-//     }
-//     calendarEl.appendChild(daySquare);
-//   }
-// }
-
-// // Event Management
-// async function loadEvents() {
-//   const q = query(collection(db, 'events'), where('userId', '==', currentUser.uid));
-//   const querySnapshot = await getDocs(q);
-//   events = querySnapshot.docs.map(doc => ({
-//     id: doc.id,
-//     ...doc.data()
-//   }));
-//   initCalendar();
-// }
-
-// async function saveEvent(eventData) {
-//   await addDoc(collection(db, 'events'), {
-//     ...eventData,
-//     userId: currentUser.uid
-//   });
-//   loadEvents();
-// }
-
-// async function updateEvent(eventId, newData) {
-//   await updateDoc(doc(db, 'events', eventId), newData);
-//   loadEvents();
-// }
-
-// async function deleteEvent(eventId) {
-//   await deleteDoc(doc(db, 'events', eventId));
-//   loadEvents();
-// }
-
-// // Modal Handling
-// function openNewEventModal(date) {
-//   selectedDate = date;
-//   generateTimeOptions(eventTimeInput);
-//   newEventModal.style.display = 'block';
-// }
-
-// document.getElementById('saveButton').addEventListener('click', async () => {
-//   const eventData = {
-//     date: selectedDate,
-//     title: eventTitleInput.value,
-//     time: eventTimeInput.value,
-//     description: eventDescriptionInput.value,
-//     createdAt: new Date().toISOString()
-//   };
-  
-//   await saveEvent(eventData);
-//   closeAllModals();
-// });
-
-// document.getElementById('cancelButton').addEventListener('click', closeAllModals);
-
-// calendarEl.addEventListener('click', (e) => {
-//   if (e.target.classList.contains('delete-btn')) {
-//     const eventId = e.target.dataset.id;
-//     deleteEvent(eventId);
-//   }
-  
-//   if (e.target.classList.contains('edit-btn')) {
-//     const eventId = e.target.dataset.id;
-//     const event = events.find(ev => ev.id === eventId);
-//     openEditModal(event);
-//   }
-// });
-
-// function openEditModal(event) {
-//   generateTimeOptions(document.getElementById('editEventTime'));
-//   document.getElementById('editEventTitle').value = event.title;
-//   document.getElementById('editEventTime').value = event.time;
-//   document.getElementById('editEventDescription').value = event.description;
-//   editEventModal.style.display = 'block';
-  
-//   document.getElementById('saveEditedEvent').onclick = async () => {
-//     await updateEvent(event.id, {
-//       title: document.getElementById('editEventTitle').value,
-//       time: document.getElementById('editEventTime').value,
-//       description: document.getElementById('editEventDescription').value
-//     });
-//     closeAllModals();
-//   };
-// }
-
-// function closeAllModals() {
-//   [newEventModal, deleteEventModal, editEventModal].forEach(modal => {
-//     modal.style.display = 'none';
-//   });
-//   eventTitleInput.value = '';
-//   eventTimeInput.value = '';
-//   eventDescriptionInput.value = '';
-// }
-
-// // Utility Functions
-// function generateTimeOptions(selectElement) {
-//   selectElement.innerHTML = '<option value="" disabled selected>Select time</option>';
-//   for (let hour = 0; hour < 24; hour++) {
-//     for (let minute = 0; minute < 60; minute += 30) {
-//       const time = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
-//       const option = document.createElement('option');
-//       option.value = time;
-//       option.textContent = time;
-//       selectElement.appendChild(option);
-//     }
-//   }
-// }
-
-// // Navigation
-// document.getElementById('nextButton').addEventListener('click', () => {
-//   nav++;
-//   initCalendar();
-// });
-
-// document.getElementById('backButton').addEventListener('click', () => {
-//   nav--;
-//   initCalendar();
-// });
-
-
-
-// // Alert System
-// function showAlert(title, message) {
-//   const alertModal = document.getElementById('customAlertModal');
-//   document.getElementById('alertTitle').textContent = title;
-//   document.getElementById('alertMessage').textContent = message;
-//   alertModal.style.display = 'block';
-// }
-
-// document.querySelectorAll('.close-alert, .modal-close-button').forEach(btn => {
-//   btn.addEventListener('click', () => {
-//     document.getElementById('customAlertModal').style.display = 'none';
-//   });
-// });
 
 // import { initializeApp } from "firebase/app";
 // import {
