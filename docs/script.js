@@ -439,24 +439,61 @@ async function removeEvent(title, date) {
 }
 
 // Chatbot event listener
-aiButton.addEventListener('click', async () => {
-  const prompt = aiInput.value.trim().toLowerCase();
+// aiButton.addEventListener('click', async () => {
+//   const prompt = aiInput.value.trim().toLowerCase();
+//   if (prompt) {
+//     if (!ruleChatBot(prompt)) {
+//       // If no rule matches, send the prompt to the AI
+//       try {
+//         const response = await askChatBot(prompt);
+//         appendMessage(`AI: ${response}`); // Display the AI's response
+//       } catch (error) {
+//         console.error("Error asking chatbot: ", error);
+//         appendMessage("Sorry, something went wrong. Please try again.");
+//       }
+//     }
+//   } else {
+//     appendMessage("Please enter a prompt.");
+//   }
+//   aiInput.value = ""; // Clear the input field
+// });
+
+
+document.getElementById('aiButton').addEventListener('click', async () => {
+  const prompt = document.getElementById('aiInput').value.trim().toLowerCase();
   if (prompt) {
-    if (!ruleChatBot(prompt)) {
-      // If no rule matches, send the prompt to the AI
-      try {
-        const response = await askChatBot(prompt);
-        appendMessage(`AI: ${response}`); // Display the AI's response
-      } catch (error) {
-        console.error("Error asking chatbot: ", error);
-        appendMessage("Sorry, something went wrong. Please try again.");
+    try {
+      const response = await askChatBot(prompt);
+      console.log("AI Response:", response);
+
+      // Parse the AI's response to extract event details
+      if (response.includes("add event")) {
+        const eventDetails = response.replace("add event", "").trim();
+        const [title, date, time] = parseEventDetails(eventDetails);
+        if (title && date && time) {
+          await addEvent(title, date, time);
+        } else {
+          console.log("Invalid event details.");
+        }
+      } else if (response.includes("remove event")) {
+        const eventDetails = response.replace("remove event", "").trim();
+        const [title, date] = parseRemoveDetails(eventDetails);
+        if (title && date) {
+          await removeEvent(title, date);
+        } else {
+          console.log("Invalid event details.");
+        }
       }
+    } catch (error) {
+      console.error("Error asking chatbot: ", error);
     }
   } else {
-    appendMessage("Please enter a prompt.");
+    console.log("Please enter a prompt.");
   }
-  aiInput.value = ""; // Clear the input field
 });
+
+
+
 
 // async function getApiKey() {
 //   try {
