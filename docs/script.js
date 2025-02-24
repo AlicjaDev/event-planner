@@ -60,7 +60,78 @@ async function fetchEvents() {
 }
 
 // Render the calendar
+// function load() {
+//   const dt = new Date();
+
+//   if (nav !== 0) {
+//     dt.setMonth(new Date().getMonth() + nav);
+//   }
+
+//   const day = dt.getDate();
+//   const month = dt.getMonth();
+//   const year = dt.getFullYear();
+
+//   const firstDayOfMonth = new Date(year, month, 1);
+//   const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+//   const dateString = firstDayOfMonth.toLocaleDateString('en-us', {
+//     weekday: 'long',
+//     year: 'numeric',
+//     month: 'numeric',
+//     day: 'numeric',
+//   });
+//   const paddingDays = weekdays.indexOf(dateString.split(', ')[0]);
+
+//   document.getElementById('monthDisplay').innerText =
+//     `${dt.toLocaleDateString('en-us', { month: 'long' })} ${year}`;
+
+//   calendar.innerHTML = '';
+
+//   for (let i = 1; i <= paddingDays + daysInMonth; i++) {
+//     const daySquare = document.createElement('div');
+//     daySquare.classList.add('day');
+
+//     const dayString = `${month + 1}/${i - paddingDays}/${year}`;
+
+//     if (i > paddingDays) {
+//       daySquare.innerText = i - paddingDays;
+//       const eventsForDay = events.filter((e) => e.date === dayString);
+
+//       if (i - paddingDays === day && nav === 0) {
+//         daySquare.id = 'currentDay';
+//       }
+
+//       if (eventsForDay.length > 0) {
+//         eventsForDay
+//           .sort((a, b) => timeToMinutes(a.time) - timeToMinutes(b.time))
+//           .forEach((event) => {
+//             const eventDiv = document.createElement('div');
+//             eventDiv.classList.add('event');
+//             eventDiv.innerHTML = `<strong>${event.time} - ${event.title}</strong>`;
+//             if (event.description) {
+//               const descriptionDiv = document.createElement('div');
+//               descriptionDiv.classList.add('event-description');
+//               descriptionDiv.innerText = event.description;
+//               eventDiv.appendChild(descriptionDiv);
+//             }
+//             daySquare.appendChild(eventDiv);
+//           });
+//       }
+
+//       daySquare.addEventListener('click', () => openModal(dayString));
+//     } else {
+//       daySquare.classList.add('padding');
+//     }
+
+//     calendar.appendChild(daySquare);
+//   }
+// }
+
+
 function load() {
+  console.log("Rendering calendar..."); // Debugging
+  console.log("Events:", events); // Debugging
+
   const dt = new Date();
 
   if (nav !== 0) {
@@ -96,6 +167,8 @@ function load() {
     if (i > paddingDays) {
       daySquare.innerText = i - paddingDays;
       const eventsForDay = events.filter((e) => e.date === dayString);
+
+      console.log(`Events for ${dayString}:`, eventsForDay); // Debugging
 
       if (i - paddingDays === day && nav === 0) {
         daySquare.id = 'currentDay';
@@ -338,16 +411,24 @@ function ruleChatBot(request) {
   return false;
 }
 
-// Function to add an event
 async function addEvent(title, date, time, description = '') {
+  console.log("Original Date:", date); // Debugging
+  console.log("Original Time:", time); // Debugging
+
   const formattedDate = convertDateFormat(date); // Convert date format
   const formattedTime = convertTimeFormat(time); // Convert time format
 
+  console.log("Formatted Date:", formattedDate); // Debugging
+  console.log("Formatted Time:", formattedTime); // Debugging
+
   const eventData = {
-    date: formattedDate,
-    time: formattedTime,
+    date: formattedDate, // Use the converted date format
+    time: formattedTime, // Use the converted time format
     title: title,
     description: description,
+    email: "", // Add default values for optional fields
+    phone: "",
+    reminderTime: null,
   };
 
   try {
@@ -359,6 +440,28 @@ async function addEvent(title, date, time, description = '') {
     console.error("Error adding event: ", error);
   }
 }
+
+// Function to add an event
+// async function addEvent(title, date, time, description = '') {
+//   const formattedDate = convertDateFormat(date); // Convert date format
+//   const formattedTime = convertTimeFormat(time); // Convert time format
+
+//   const eventData = {
+//     date: formattedDate,
+//     time: formattedTime,
+//     title: title,
+//     description: description,
+//   };
+
+//   try {
+//     await addDoc(collection(db, 'events'), eventData);
+//     events.push(eventData); // Add the new event to the global array
+//     load(); // Refresh the calendar
+//     console.log(`Event "${title}" added on ${formattedDate} at ${formattedTime}.`);
+//   } catch (error) {
+//     console.error("Error adding event: ", error);
+//   }
+// }
 
 // Chatbot event listener
 // document.getElementById('aiButton').addEventListener('click', async () => {
@@ -491,63 +594,63 @@ function convertTimeFormat(timeString) {
 }
 
 // Function to add an event
-async function addEvent(title, date, time, description = '') {
-  const formattedDate = convertDateFormat(date); // Convert date format
-  const formattedTime = convertTimeFormat(time); // Convert time format
+// async function addEvent(title, date, time, description = '') {
+//   const formattedDate = convertDateFormat(date); // Convert date format
+//   const formattedTime = convertTimeFormat(time); // Convert time format
 
-  const eventData = {
-    date: formattedDate, // Use the converted date format
-    time: formattedTime, // Use the converted time format
-    title: title,
-    description: description,
-    email: "", // Add default values for optional fields
-    phone: "",
-    reminderTime: null,
-  };
+//   const eventData = {
+//     date: formattedDate, // Use the converted date format
+//     time: formattedTime, // Use the converted time format
+//     title: title,
+//     description: description,
+//     email: "", // Add default values for optional fields
+//     phone: "",
+//     reminderTime: null,
+//   };
 
-  try {
-    await addDoc(collection(db, 'events'), eventData);
-    events.push(eventData); // Add the new event to the global array
-    load(); // Refresh the calendar
-    console.log(`Event "${title}" added on ${formattedDate} at ${formattedTime}.`);
-  } catch (error) {
-    console.error("Error adding event: ", error);
-  }
-}
+//   try {
+//     await addDoc(collection(db, 'events'), eventData);
+//     events.push(eventData); // Add the new event to the global array
+//     load(); // Refresh the calendar
+//     console.log(`Event "${title}" added on ${formattedDate} at ${formattedTime}.`);
+//   } catch (error) {
+//     console.error("Error adding event: ", error);
+//   }
+// }
 
 // Chatbot event listener
-document.getElementById('aiButton').addEventListener('click', async () => {
-  const prompt = document.getElementById('aiInput').value.trim().toLowerCase();
-  if (prompt) {
-    try {
-      const response = await askChatBot(prompt);
-      console.log("AI Response:", response);
+// document.getElementById('aiButton').addEventListener('click', async () => {
+//   const prompt = document.getElementById('aiInput').value.trim().toLowerCase();
+//   if (prompt) {
+//     try {
+//       const response = await askChatBot(prompt);
+//       console.log("AI Response:", response);
 
-      // Parse the AI's response to extract event details
-      if (response.includes("add event")) {
-        const eventDetails = response.replace("add event", "").trim();
-        const [title, date, time] = parseEventDetails(eventDetails);
-        if (title && date && time) {
-          await addEvent(title, date, time);
-        } else {
-          console.log("Invalid event details.");
-        }
-      } else if (response.includes("remove event")) {
-        const eventDetails = response.replace("remove event", "").trim();
-        const [title, date] = parseRemoveDetails(eventDetails);
-        if (title && date) {
-          await removeEvent(title, date);
-        } else {
-          console.log("Invalid event details.");
-        }
-      }
-    } catch (error) {
-      console.error("Error asking chatbot: ", error);
-    }
-  } else {
-    console.log("Please enter a prompt.");
-  }
-});
+//       // Parse the AI's response to extract event details
+//       if (response.includes("add event")) {
+//         const eventDetails = response.replace("add event", "").trim();
+//         const [title, date, time] = parseEventDetails(eventDetails);
+//         if (title && date && time) {
+//           await addEvent(title, date, time);
+//         } else {
+//           console.log("Invalid event details.");
+//         }
+//       } else if (response.includes("remove event")) {
+//         const eventDetails = response.replace("remove event", "").trim();
+//         const [title, date] = parseRemoveDetails(eventDetails);
+//         if (title && date) {
+//           await removeEvent(title, date);
+//         } else {
+//           console.log("Invalid event details.");
+//         }
+//       }
+//     } catch (error) {
+//       console.error("Error asking chatbot: ", error);
+//     }
+//   } else {
+//     console.log("Please enter a prompt.");
+//   }
+// });
 
 // Helper function to parse event details
 function parseEventDetails(eventDetails) {
@@ -566,6 +669,50 @@ function parseRemoveDetails(removeDetails) {
   const date = parts[1] ? parts[1].trim() : null;
   return [title, date];
 }
+
+
+
+document.getElementById('aiButton').addEventListener('click', async () => {
+  const prompt = document.getElementById('aiInput').value.trim().toLowerCase();
+  if (prompt) {
+    try {
+      const response = await askChatBot(prompt);
+      console.log("AI Response:", response);
+
+      // Parse the AI's response to extract event details
+      if (response.includes("add event")) {
+        const eventDetails = response.replace("add event", "").trim();
+        const [title, date, time] = parseEventDetails(eventDetails);
+
+        console.log("Parsed Title:", title); // Debugging
+        console.log("Parsed Date:", date); // Debugging
+        console.log("Parsed Time:", time); // Debugging
+
+        if (title && date && time) {
+          await addEvent(title, date, time);
+        } else {
+          console.log("Invalid event details.");
+        }
+      } else if (response.includes("remove event")) {
+        const eventDetails = response.replace("remove event", "").trim();
+        const [title, date] = parseRemoveDetails(eventDetails);
+
+        console.log("Parsed Title:", title); // Debugging
+        console.log("Parsed Date:", date); // Debugging
+
+        if (title && date) {
+          await removeEvent(title, date);
+        } else {
+          console.log("Invalid event details.");
+        }
+      }
+    } catch (error) {
+      console.error("Error asking chatbot: ", error);
+    }
+  } else {
+    console.log("Please enter a prompt.");
+  }
+});
 
 // // Helper function to convert date format (e.g., "february 19 2025" -> "2/19/2025")
 // function convertDateFormat(dateString) {
