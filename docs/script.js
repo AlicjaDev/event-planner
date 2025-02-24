@@ -276,11 +276,11 @@ function closeCustomAlert() {
 // Add event listener to Delete button
 
 // Cancel button for the delete modal
-// document.getElementById('cancelDeleteButton').addEventListener('click', closeModal);
+document.getElementById('cancelDeleteButton').addEventListener('click', closeModal);
 
-// // Delete event button logic
-// document.getElementById('deleteButton').addEventListener('click', deleteEvent);
-// document.getElementById('closeDeleteButton').addEventListener('click', closeModal);
+// Delete event button logic
+document.getElementById('deleteButton').addEventListener('click', deleteEvent);
+document.getElementById('closeDeleteButton').addEventListener('click', closeModal);
 
 // document.getElementById('deleteButton').addEventListener('click', deleteEvent);
 // document.getElementById('closeDeleteButton').addEventListener('click', closeModal);
